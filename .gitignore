@@ -1,0 +1,48 @@
+# Create .gitignore file
+cat > .gitignore << EOF
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Data files (optional - you might want to track some)
+*.csv
+*.pkl
+*.json
+
+# Model files
+saved_models/
+saved_plots/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+EOF
