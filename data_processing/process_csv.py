@@ -55,7 +55,6 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
         "own_goals",
         "next_fixture",
         "minutes",
-        "round",
         # Use round instead of GW
         "GW",
         # Remove fields from new data

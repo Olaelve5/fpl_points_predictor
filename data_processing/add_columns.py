@@ -5,7 +5,7 @@ from utils.team_id_name_map import team_id_name_map
 
 def add_columns(df, team_data_file_path=None):
     # EWMA configuration
-    span_size = 4
+    span_size = 5
 
     # Define columns to calculate EWMA for with their decimal places
     ewma_columns = {
@@ -46,6 +46,16 @@ def add_columns(df, team_data_file_path=None):
 
     # Add self team strength columns
     df = add_self_team_strength(df, team_data_file_path)
+
+    # Add attack to defense ratio column
+    df["next_fixture_atk_def_ratio"] = (
+        df["self_team_attack_rating"] / df["next_fixture_defense_rating"]
+    ).round(2)
+
+    # Add defense to attack ratio column
+    df["next_fixture_def_atk_ratio"] = (
+        df["self_team_defense_rating"] / df["next_fixture_attack_rating"]
+    ).round(2)
 
     # Add target score column
     df["target_score"] = df.groupby("name")["total_points"].shift(-1)

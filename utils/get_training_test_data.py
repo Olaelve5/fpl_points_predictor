@@ -7,7 +7,7 @@ from utils.load_csv_to_df import load_csv_to_df
 
 def get_train_test_data():
     try:
-        original_df = pd.read_pickle("data/players_data/processed_data.pkl")
+        original_df = pd.read_pickle("data/players_data/processed_data_cached.pkl")
     except FileNotFoundError:
         print(
             "Error: Processed data file not found in cache. Running data processing script..."
@@ -19,9 +19,9 @@ def get_train_test_data():
     target = original_df["target_score"]
     target.clip(lower=0, inplace=True)
 
-    # Split the data into training and testing sets - 80% train, 20% test
+    # Split the data into training and testing sets - 85% train, 15% test
     X_train, X_test, y_train, y_test = train_test_split(
-        features, target, test_size=0.2, random_state=42
+        features, target, test_size=0.15, random_state=42
     )
 
     # Handle skewed target

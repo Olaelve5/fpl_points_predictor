@@ -6,13 +6,15 @@ import numpy as np
 
 
 model = LGBMRegressor(
-    n_estimators=1000,
+    n_estimators=500,
     learning_rate=0.01,
     num_leaves=50,
     random_state=42,
     n_jobs=-1,
     alpha=0.8,
-    objective="huber",
+    reg_lambda=1.0,
+    colsample_bytree=0.8,
+    subsample=0.8,
 )
 
 

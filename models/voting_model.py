@@ -16,22 +16,29 @@ base_models = [
         "lgbm_huber",
         LGBMRegressor(
             n_estimators=1000,
-            learning_rate=0.01,
+            learning_rate=0.005,
             num_leaves=50,
             random_state=42,
+            n_jobs=-1,
             alpha=0.8,
-            objective="huber",
-            force_row_wise=True
+            reg_lambda=1.0,
+            colsample_bytree=0.8,
+            subsample=0.8,
         ),
     ),
     (
         "lgbm_l1",
         LGBMRegressor(
             n_estimators=500,
-            learning_rate=0.05,
+            learning_rate=0.01,
             max_depth=15,
             random_state=42,
-            force_row_wise=True
+            force_row_wise=True,
+            n_jobs=-1,
+            objective="regression_l1",
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_lambda=1.0,
         ),
     ),
     (

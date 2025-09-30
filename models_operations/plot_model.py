@@ -35,13 +35,13 @@ def plot_permutations(model, X_test, y_test):
 
     feature_importances = importances.importances_mean
 
-    sorted_idx = feature_importances.argsort()[-20:]  # Top 20 features
+    sorted_idx = feature_importances.argsort()[-28:]  # Top 28 features
 
     plt.figure(figsize=(10, 6))
     plt.barh(range(len(sorted_idx)), feature_importances[sorted_idx], align="center")
     plt.yticks(range(len(sorted_idx)), [X_test.columns[i] for i in sorted_idx])
     plt.xlabel("Mean Decrease in RMSE")
-    plt.title("Top 10 Feature Importances (Permutation Importance)")
+    plt.title("Top 28 Feature Importances (Permutation Importance)")
     plt.show()
 
 
@@ -70,11 +70,11 @@ def plot_data(df):
 
 
 if __name__ == "__main__":
-    model = joblib.load("data/saved_models/voting_model.pkl")
+    model = joblib.load("data/saved_models/lgbm_model.pkl")
 
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 
     # plot_target_distribution(y_test_log)
-    # plot_permutations(model, X_test, y_test_log)
+    plot_permutations(model, X_test, y_test_log)
     # plot_tree(model)
     # plot_data(original_df)
