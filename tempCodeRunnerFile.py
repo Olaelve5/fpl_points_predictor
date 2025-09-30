@@ -1,1 +1,0 @@
-np.log1p(ewma_points)

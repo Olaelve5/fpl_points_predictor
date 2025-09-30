@@ -1,5 +1,6 @@
 import pandas as pd
-from .add_columns import add_columns
+from utils.load_csv_to_df import load_csv_to_df
+from data_processing.add_columns import add_columns
 
 
 player_data_base_path = (
@@ -14,20 +15,6 @@ seasons = [
     "23_24",
     "24_25",
 ]
-
-
-def load_csv(file_path: str):
-    try:
-        # Try reading with error handling for malformed lines
-        df = pd.read_csv(file_path, engine="python")
-        print(f"File found with shape: {df.shape}")
-
-    except FileNotFoundError:
-        print("Error: CSV not found.")
-        exit()
-
-    return df
-
 
 def process_df(original_df, team_data_file_path: str, is_training=True):
 
@@ -96,7 +83,7 @@ def combine_csv():
     list_of_dfs = []
 
     for season in seasons:
-        df = load_csv(player_data_base_path + season + ".csv")
+        df = load_csv_to_df(player_data_base_path + season + ".csv")
         processed_df = process_df(df, team_data_base_path + season + ".csv")
         list_of_dfs.append(processed_df)
 
