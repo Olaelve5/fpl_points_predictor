@@ -1,29 +1,15 @@
 import matplotlib.pyplot as plt
 from sklearn.inspection import permutation_importance
-from data_processing.process_csv import load_csv
-from sklearn.model_selection import train_test_split
 import numpy as np
 import joblib
 import lightgbm as lgb
-
-
-original_df = load_csv("players_data/players_22-23_to_24-25.csv")
-
-
-features = original_df.drop(columns=["target_score"])
-target = original_df["target_score"]
-target.clip(lower=0, inplace=True)
-
-# Split the data into training and testing sets - 80% train, 20% test
-X_train, X_test, y_train, y_test = train_test_split(
-    features, target, test_size=0.2, random_state=42
-)
-
-y_train_log = np.log1p(y_train)
-y_test_log = np.log1p(y_test)
+from utils.get_training_test_data import get_train_test_data
 
 
 def plot_predictions(y_test, y_pred):
+    y_test = np.expm1(y_test)
+    y_pred = np.expm1(y_pred)
+
     plt.figure(figsize=(10, 6))
     plt.scatter(y_test, y_pred, alpha=0.5)
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "r--")
@@ -36,7 +22,7 @@ def plot_predictions(y_test, y_pred):
     plt.savefig("saved_plots/preds_vs_actual.png")
 
 
-def plot_permutations(model):
+def plot_permutations(model, X_test, y_test):
     importances = permutation_importance(
         model,
         X_test,
@@ -85,7 +71,10 @@ def plot_data(df):
 
 if __name__ == "__main__":
     model = joblib.load("saved_models/lgbm_model.pkl")
+
+    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
+
     # plot_target_distribution(y_test_log)
-    plot_permutations(model)
-    #plot_tree(model)
-    #plot_data(original_df)
+    # plot_permutations(model, X_test, y_test_log)
+    # plot_tree(model)
+    # plot_data(original_df)

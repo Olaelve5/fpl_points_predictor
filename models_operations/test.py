@@ -27,7 +27,11 @@ def test_model(model_preds, y_test):
     return mae, rmse, r2, rmsle_score
 
 
-def compare_model_to_baseline(baseline_model_preds, other_model_preds, y_test):
+def compare_model_to_baseline(other_model_preds, y_test, X_test):
+    baseline_model = BaselineModel()
+    baseline_predictions_raw = baseline_model.predict(X_test)
+    baseline_model_preds = np.expm1(baseline_predictions_raw)
+
     # Print Baseline Metrics
     baseline_mae, baseline_rmse, baseline_r2, baseline_rmsle = test_model(
         baseline_model_preds, y_test
@@ -56,14 +60,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 
     other_model = joblib.load("saved_models/lgbm_model.pkl")
-    baseline_model = BaselineModel()
-
-    baseline_predictions_raw = baseline_model.predict(X_test)
     other_model_predictions_raw = other_model.predict(X_test)
-
-    baseline_predictions = np.expm1(baseline_predictions_raw)
     other_model_predictions = np.expm1(other_model_predictions_raw)
 
-    compare_model_to_baseline(
-        baseline_predictions, other_model_predictions, np.expm1(y_test_log)
-    )
+    compare_model_to_baseline(other_model_predictions, np.expm1(y_test_log), X_test)
