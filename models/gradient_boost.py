@@ -11,6 +11,8 @@ model = LGBMRegressor(
     num_leaves=50,
     random_state=42,
     n_jobs=-1,
+    alpha=0.8,
+    objective="huber",
 )
 
 

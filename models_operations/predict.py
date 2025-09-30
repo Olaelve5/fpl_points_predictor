@@ -1,5 +1,6 @@
 import numpy as np
-from data_processing.process_csv import load_csv, process_df
+from data_processing.process_csv import process_df
+from utils.load_csv_to_df import load_csv_to_df
 import joblib
 
 
@@ -17,7 +18,9 @@ def make_predictions(model, raw_df):
     processed_df = processed_df.reindex(columns=feature_order, fill_value=0)
 
     # Save to csv for inspection
-    processed_df.to_csv("processed_player_data_for_prediction.csv", index=False)
+    processed_df.to_csv(
+        "prediction_data/processed_player_data_for_prediction.csv", index=False
+    )
 
     latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
     round_to_predict = latest_completed_round + 1
@@ -33,17 +36,17 @@ def make_predictions(model, raw_df):
     results_df["round_predicted"] = round_to_predict
     results_df["predicted_target_score"] = y_pred
     results_df.sort_values(by="predicted_target_score", ascending=False, inplace=True)
-    results_df["predicted_target_score"] = results_df["predicted_target_score"].round(2)
+    results_df["predicted_target_score"] = results_df["predicted_target_score"].round(1)
     print(results_df.head(20))
 
-    results_df.to_csv("predicted_player_scores.csv", index=False)
+    results_df.to_csv("prediction_data/predicted_player_scores.csv", index=False)
     print("Predictions saved to predicted_player_scores.csv")
 
 
 if __name__ == "__main__":
-    model = joblib.load("saved_models/lgbm_model.pkl")
+    model = joblib.load("saved_models/voting_model.pkl")
 
-    raw_df = load_csv(
+    raw_df = load_csv_to_df(
         "/Users/ola/Documents/FPL_Price_Predictor/players_data/merged_gw_25_26.csv"
     )
 
