@@ -15,7 +15,6 @@ except FileNotFoundError:
     )
     original_df = load_csv("players_data/players_22-23_to_24-25.csv")
     original_df.to_pickle("players_data/processed_data.pkl")
-    exit()
 
 features = original_df.drop(columns=["target_score"])
 target = original_df["target_score"]
@@ -30,6 +29,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 y_train_log = np.log1p(y_train)
 y_test_log = np.log1p(y_test)
 
+# Save feature order for later use in predictions
+feature_order = X_train.columns.tolist()
+joblib.dump(feature_order, "saved_models/feature_order.pkl")
+
 
 def train_model(X_train, y_train_log):
     print("Training model...")
@@ -42,7 +45,7 @@ def train_model(X_train, y_train_log):
         learning_rate=0.01,
         random_state=42,
     )
-    sample_weights = y_train_log.clip(lower=1, upper=5)
+    sample_weights = y_train_log.clip(lower=1, upper=3)
 
     model.fit(X_train, y_train_log, sample_weight=sample_weights)
 

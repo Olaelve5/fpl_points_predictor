@@ -29,7 +29,7 @@ def load_csv(file_path: str):
     return df
 
 
-def process_df(original_df, team_data_file_path: str, drop_last_gw=True):
+def process_df(original_df, team_data_file_path: str, is_training=True):
 
     # Add new columns
     original_df = add_columns(original_df, team_data_file_path)
@@ -81,16 +81,13 @@ def process_df(original_df, team_data_file_path: str, drop_last_gw=True):
     cleaned_df = original_df.drop(columns=columns_to_drop, errors="ignore")
 
     # Drop rows where target_score is NaN (last gameweek for each player)
-    if drop_last_gw:
+    if is_training:
         cleaned_df.dropna(subset=["target_score"], inplace=True)
 
     # Change boolean values to integers (0 and 1)
     boolean_columns = ["pos_DEF", "pos_FWD", "pos_GK", "pos_MID", "next_is_home"]
+    cleaned_df[boolean_columns] = cleaned_df[boolean_columns].fillna(0)
     cleaned_df[boolean_columns] = cleaned_df[boolean_columns].astype(int)
-
-    # Filter out rows where ewma_minutes is too low
-    # min_minutes_threshold = 0
-    # cleaned_df = cleaned_df[cleaned_df["ewma_minutes"] >= min_minutes_threshold]
 
     return cleaned_df
 

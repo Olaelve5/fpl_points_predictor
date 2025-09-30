@@ -7,19 +7,22 @@ def make_predictions(model, raw_df):
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
 
     processed_df = process_df(
-        raw_df, "/Users/ola/Documents/FPL_Price_Predictor/team_data/teams_25_26.csv",
-        drop_last_gw=True
+        raw_df,
+        "/Users/ola/Documents/FPL_Price_Predictor/team_data/teams_25_26.csv",
+        is_training=False,
     )
 
-    print(processed_df)
+    # Re-order columns to fit the training data order
+    feature_order = joblib.load("saved_models/feature_order.pkl")
+    processed_df = processed_df.reindex(columns=feature_order, fill_value=0)
 
-    print(f"Max round in data: {processed_df['round'].max()}")
+    # Save to csv for inspection
+    processed_df.to_csv("processed_player_data_for_prediction.csv", index=False)
 
-    features = processed_df.drop(columns=["target_score"], errors="ignore")
+    latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
+    round_to_predict = latest_completed_round + 1
 
-    round_to_predict = 5
-
-    rows_to_predict = features[features["round"] == round_to_predict - 1]
+    rows_to_predict = processed_df[processed_df["round"] == round_to_predict - 1]
 
     print(f"Features shape for prediction: {rows_to_predict.shape}")
 
