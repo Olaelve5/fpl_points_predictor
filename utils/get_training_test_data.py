@@ -7,13 +7,13 @@ from utils.load_csv_to_df import load_csv_to_df
 
 def get_train_test_data():
     try:
-        original_df = pd.read_pickle("players_data/processed_data.pkl")
+        original_df = pd.read_pickle("data/players_data/processed_data.pkl")
     except FileNotFoundError:
         print(
             "Error: Processed data file not found in cache. Running data processing script..."
         )
-        original_df = load_csv_to_df("players_data/players_22-23_to_24-25.csv")
-        original_df.to_pickle("players_data/processed_data.pkl")
+        original_df = load_csv_to_df("data/players_data/players_22-23_to_24-25.csv")
+        original_df.to_pickle("data/players_data/processed_data_cached.pkl")
 
     features = original_df.drop(columns=["target_score"])
     target = original_df["target_score"]
@@ -30,6 +30,6 @@ def get_train_test_data():
 
     # Save feature order for later use in predictions
     feature_order = X_train.columns.tolist()
-    joblib.dump(feature_order, "saved_models/feature_order.pkl")
+    joblib.dump(feature_order, "data/saved_models/feature_order.pkl")
 
     return X_train, X_test, y_train_log, y_test_log

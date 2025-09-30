@@ -3,18 +3,7 @@ import pandas as pd
 import numpy as np
 import concurrent.futures
 from tqdm import tqdm
-
-
-def get_team_id_map():
-    file_path = "/Users/ola/Documents/FPL_Price_Predictor/team_data/teams_25_26.csv"
-
-    try:
-        df = pd.read_csv(file_path)
-        team_id_map = pd.Series(df.name.values, index=df.id).to_dict()
-        return team_id_map
-    except FileNotFoundError:
-        print("Error: Team data CSV not found.")
-        return {}
+from utils.team_id_name_map import team_id_name_map
 
 
 def get_player_details():
@@ -117,7 +106,7 @@ def format_data(raw_player_data, player_id, id_name_map):
 
     # Add the team name
     team_id = id_name_map.get(player_id, {}).get("team_id")
-    player_df["team"] = get_team_id_map().get(team_id, "Unknown Team")
+    player_df["team"] = team_id_name_map().get(team_id, "Unknown Team")
 
     return player_df
 

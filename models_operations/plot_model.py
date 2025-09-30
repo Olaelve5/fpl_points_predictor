@@ -19,7 +19,7 @@ def plot_predictions(y_test, y_pred):
     plt.show()
 
     # Save the plot
-    plt.savefig("saved_plots/preds_vs_actual.png")
+    plt.savefig("data/saved_plots/preds_vs_actual.png")
 
 
 def plot_permutations(model, X_test, y_test):
@@ -70,11 +70,11 @@ def plot_data(df):
 
 
 if __name__ == "__main__":
-    model = joblib.load("saved_models/voting_model.pkl")
+    model = joblib.load("data/saved_models/voting_model.pkl")
 
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 
     # plot_target_distribution(y_test_log)
-    plot_permutations(model, X_test, y_test_log)
+    # plot_permutations(model, X_test, y_test_log)
     # plot_tree(model)
     # plot_data(original_df)

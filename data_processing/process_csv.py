@@ -4,9 +4,9 @@ from data_processing.add_columns import add_columns
 
 
 player_data_base_path = (
-    "/Users/ola/Documents/FPL_Price_Predictor/players_data/merged_gw_"
+    "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_"
 )
-team_data_base_path = "/Users/ola/Documents/FPL_Price_Predictor/team_data/teams_"
+team_data_base_path = "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
 
 seasons = [
     # "20_21",
@@ -55,6 +55,7 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
         "own_goals",
         "next_fixture",
         "minutes",
+        "round",
         # Use round instead of GW
         "GW",
         # Remove fields from new data
@@ -102,7 +103,7 @@ def combine_csv():
 
     # save to new CSV
     combined_df.to_csv(
-        f"/Users/ola/Documents/FPL_Price_Predictor/players_data/players_{min_season}_to_{max_season}.csv",
+        f"/Users/ola/Documents/FPL_Price_Predictor/data/players_data/players_{min_season}_to_{max_season}.csv",
         index=False,
     )
 
