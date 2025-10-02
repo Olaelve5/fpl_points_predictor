@@ -7,17 +7,37 @@ from utils.load_csv_to_df import load_csv_to_df
 
 def get_train_test_data():
     try:
-        original_df = pd.read_pickle("data/players_data/processed_data_cached.pkl")
+        original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
     except FileNotFoundError:
         print(
-            "Error: Processed data file not found in cache. Running data processing script..."
+            "Error: CSV file not found. Please ensure the file exists at the specified path."
         )
-        original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
-        original_df.to_pickle("data/players_data/processed_data_cached.pkl")
+        return None, None, None, None
 
     features = original_df.drop(columns=["target_score"])
     target = original_df["target_score"]
     target.clip(lower=0, inplace=True)
+
+    # Drop unimportant features
+    columns_to_drop = [
+        "threat",
+        "ewma_threat",
+        "ewma_xA",
+        "ewma_xG",
+        "influence",
+        "tackles",
+        "ewma_cs",
+        "yellow_cards",
+        "recoveries",
+        "clearances_blocks_interceptions",
+        "ewma_minutes",
+        "defensive_contribution",
+        "ewma_gc",
+        "expected_goal_involvements",
+        "ewma_bps",
+    ]
+
+    features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
     # Split the data into training and testing sets - 80% train, 20% test
     X_train, X_test, y_train, y_test = train_test_split(

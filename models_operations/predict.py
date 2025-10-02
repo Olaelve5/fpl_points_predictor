@@ -4,6 +4,7 @@ from utils.load_csv_to_df import load_csv_to_df
 import joblib
 
 
+
 def make_predictions(model, raw_df):
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
 

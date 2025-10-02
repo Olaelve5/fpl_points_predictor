@@ -42,14 +42,6 @@ base_models = [
         ),
     ),
     (
-        "rf_mae",
-        RandomForestRegressor(
-            n_estimators=500,
-            max_depth=20,
-            random_state=42,
-        ),
-    ),
-    (
         "hgb_quantile",
         HistGradientBoostingRegressor(
             random_state=50,

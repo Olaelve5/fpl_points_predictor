@@ -54,7 +54,6 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
         "was_home",
         "own_goals",
         "next_fixture",
-        "minutes",
         # Use round instead of GW
         "GW",
     ]

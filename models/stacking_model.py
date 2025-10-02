@@ -1,7 +1,10 @@
-from sklearn.ensemble import StackingRegressor, HistGradientBoostingRegressor
-from sklearn.linear_model import Ridge
+from sklearn.ensemble import (
+    StackingRegressor,
+    HistGradientBoostingRegressor,
+    RandomForestRegressor,
+)
+from sklearn.linear_model import Lasso
 from lightgbm import LGBMRegressor
-from sklearn.ensemble import RandomForestRegressor
 from models_operations.train import train_model
 from models_operations.test import compare_model_to_baseline
 from utils.get_training_test_data import get_train_test_data
@@ -13,31 +16,29 @@ base_models = [
         "lgbm_huber",
         LGBMRegressor(
             n_estimators=1000,
-            learning_rate=0.01,
+            learning_rate=0.005,
             num_leaves=50,
             random_state=42,
+            n_jobs=-1,
             alpha=0.8,
-            objective="huber",
-            force_row_wise=True,
+            reg_lambda=1.0,
+            colsample_bytree=0.8,
+            subsample=0.8,
         ),
     ),
     (
         "lgbm_l1",
         LGBMRegressor(
             n_estimators=500,
-            learning_rate=0.05,
+            learning_rate=0.01,
             max_depth=15,
             random_state=42,
             force_row_wise=True,
-        ),
-    ),
-    (
-        "rf_mae",
-        RandomForestRegressor(
-            n_estimators=500,
-            max_depth=20,
-            random_state=42,
-            criterion="absolute_error",
+            n_jobs=-1,
+            objective="regression_l1",
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_lambda=1.0,
         ),
     ),
     (
@@ -48,16 +49,18 @@ base_models = [
             learning_rate=0.05,
             min_samples_leaf=15,
             max_iter=1200,
-            quantile=0.5,
-            loss="poisson",
+            quantile=0.5,  # Median regression
         ),
     ),
 ]
 
+meta_learner = Lasso(alpha=0.001, random_state=42)
+
 
 model = StackingRegressor(
     estimators=base_models,
-    final_estimator=Ridge(alpha=1.0),
+    final_estimator=meta_learner,
+    cv=5,
     n_jobs=-1,
     verbose=True,
 )
@@ -67,7 +70,10 @@ if __name__ == "__main__":
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 
     trained_model = train_model(
-        model, "data/saved_models/stacking_model.pkl", plot=True
+        model,
+        "data/saved_models/stacking_model.pkl",
+        plot=True,
+        with_sample_weights=False,
     )
 
     model_preds = np.expm1(trained_model.predict(X_test))

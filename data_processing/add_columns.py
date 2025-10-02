@@ -5,7 +5,7 @@ from utils.team_id_name_map import team_id_name_map
 
 def add_columns(df, team_data_file_path=None):
     # EWMA configuration
-    span_size = 5
+    span_size = 6
 
     # Define columns to calculate EWMA for with their decimal places
     ewma_columns = {
@@ -13,6 +13,7 @@ def add_columns(df, team_data_file_path=None):
         "minutes": {"name": "ewma_minutes", "decimals": 1},
         "bps": {"name": "ewma_bps", "decimals": 1},
         "expected_goals": {"name": "ewma_xG", "decimals": 2},
+        "expected_goals_involvements": {"name": "ewma_xGI", "decimals": 2},
         "expected_assists": {"name": "ewma_xA", "decimals": 2},
         "threat": {"name": "ewma_threat", "decimals": 1},
         "creativity": {"name": "ewma_creativity", "decimals": 1},
@@ -20,17 +21,22 @@ def add_columns(df, team_data_file_path=None):
         "clean_sheets": {"name": "ewma_cs", "decimals": 2},
         "yellow_cards": {"name": "ewma_yellow_cards", "decimals": 2},
         "goals_conceded": {"name": "ewma_gc", "decimals": 2},
+        "defensive_contribution": {"name": "ewma_def_contr", "decimals": 2},
     }
 
     # Calculate EWMA for each column
     for source_col, config in ewma_columns.items():
-        df[config["name"]] = round(
-            df.groupby("name")[source_col]
-            .ewm(span=span_size, adjust=False)
-            .mean()
-            .reset_index(level=0, drop=True),
-            config["decimals"],
-        )
+        if source_col in df.columns:
+            df[config["name"]] = round(
+                df.groupby("name")[source_col]
+                .ewm(span=span_size, adjust=False)
+                .mean()
+                .reset_index(level=0, drop=True),
+                config["decimals"],
+            )
+        else:
+            # If the source column doesn't exist, create the EWMA column with NaN values
+            df[config["name"]] = np.nan
 
     # One-hot encode positions
     position_dummies = pd.get_dummies(df["position"], prefix="pos")

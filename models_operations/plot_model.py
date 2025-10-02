@@ -35,7 +35,7 @@ def plot_permutations(model, X_test, y_test):
 
     feature_importances = importances.importances_mean
 
-    sorted_idx = feature_importances.argsort()[-28:]  # Top 28 features
+    sorted_idx = feature_importances.argsort() 
 
     plt.figure(figsize=(10, 6))
     plt.barh(range(len(sorted_idx)), feature_importances[sorted_idx], align="center")
@@ -70,7 +70,7 @@ def plot_data(df):
 
 
 if __name__ == "__main__":
-    model = joblib.load("data/saved_models/lgbm_model.pkl")
+    model = joblib.load("data/saved_models/stacking_model.pkl")
 
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 
