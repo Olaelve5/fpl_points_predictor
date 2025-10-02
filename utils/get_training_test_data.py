@@ -12,16 +12,16 @@ def get_train_test_data():
         print(
             "Error: Processed data file not found in cache. Running data processing script..."
         )
-        original_df = load_csv_to_df("data/players_data/players_22-23_to_24-25.csv")
+        original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
         original_df.to_pickle("data/players_data/processed_data_cached.pkl")
 
     features = original_df.drop(columns=["target_score"])
     target = original_df["target_score"]
     target.clip(lower=0, inplace=True)
 
-    # Split the data into training and testing sets - 85% train, 15% test
+    # Split the data into training and testing sets - 80% train, 20% test
     X_train, X_test, y_train, y_test = train_test_split(
-        features, target, test_size=0.15, random_state=42
+        features, target, test_size=0.20, random_state=50
     )
 
     # Handle skewed target

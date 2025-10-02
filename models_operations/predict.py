@@ -34,9 +34,9 @@ def make_predictions(model, raw_df):
 
     results_df = identifiers.loc[rows_to_predict.index].copy()
     results_df["round_predicted"] = round_to_predict
-    results_df["predicted_target_score"] = y_pred
-    results_df.sort_values(by="predicted_target_score", ascending=False, inplace=True)
-    results_df["predicted_target_score"] = results_df["predicted_target_score"].round(1)
+    results_df["predicted_points"] = y_pred
+    results_df.sort_values(by="predicted_points", ascending=False, inplace=True)
+    results_df["predicted_points"] = results_df["predicted_points"].round(1)
     print(results_df.head(20))
 
     results_df.to_csv("data/prediction_data/predicted_player_scores.csv", index=False)

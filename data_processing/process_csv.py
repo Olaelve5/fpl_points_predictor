@@ -2,7 +2,6 @@ import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
 from data_processing.add_columns import add_columns
 
-
 player_data_base_path = (
     "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_"
 )
@@ -14,10 +13,11 @@ seasons = [
     "22_23",
     "23_24",
     "24_25",
+    "25_26",
 ]
 
-def process_df(original_df, team_data_file_path: str, is_training=True):
 
+def process_df(original_df, team_data_file_path: str, is_training=True):
     # Add new columns
     original_df = add_columns(original_df, team_data_file_path)
 
@@ -57,11 +57,6 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
         "minutes",
         # Use round instead of GW
         "GW",
-        # Remove fields from new data
-        "clearances_blocks_interceptions",
-        "defensive_contribution",
-        "recoveries",
-        "tackles",
     ]
 
     # Drop columns that are not needed for modeling (ignore errors if they don't exist)
@@ -73,21 +68,38 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
 
     # Change boolean values to integers (0 and 1)
     boolean_columns = ["pos_DEF", "pos_FWD", "pos_GK", "pos_MID", "next_is_home"]
-    cleaned_df[boolean_columns] = cleaned_df[boolean_columns].fillna(0)
-    cleaned_df[boolean_columns] = cleaned_df[boolean_columns].astype(int)
+    cleaned_df[boolean_columns] = (
+        cleaned_df[boolean_columns].astype(float).fillna(0).astype(int)
+    )
 
     return cleaned_df
 
 
 def combine_csv():
-    list_of_dfs = []
+    # Pull latest data if 25_26 in seasons
+    # if "25_26" in seasons:
+    #     fetch_all_players_data()
 
+    # Process all DataFrames first to build a complete column list
+    all_processed_dfs = []
+    all_columns = set()
     for season in seasons:
+        print(f"Processing season: {season}")
         df = load_csv_to_df(player_data_base_path + season + ".csv")
         processed_df = process_df(df, team_data_base_path + season + ".csv")
-        list_of_dfs.append(processed_df)
+        all_processed_dfs.append(processed_df)
+        all_columns.update(processed_df.columns)
 
-    combined_df = pd.concat(list_of_dfs, ignore_index=True)
+    # Now, harmonize and append
+    final_list_of_dfs = []
+    final_columns = sorted(list(all_columns))  # Use a sorted list for consistent order
+
+    for processed_df in all_processed_dfs:
+        # Reindex the DataFrame to include all columns, filling missing ones with 0
+        harmonized_df = processed_df.reindex(columns=final_columns, fill_value=0)
+        final_list_of_dfs.append(harmonized_df)
+
+    combined_df = pd.concat(final_list_of_dfs, ignore_index=True)
 
     # Remove players with position 'AM' (assistant managers)
     combined_df = combined_df[combined_df["pos_AM"] == 0].copy()

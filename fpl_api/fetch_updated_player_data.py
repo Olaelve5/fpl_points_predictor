@@ -119,7 +119,13 @@ def fetch_and_format_player(player_id, id_name_map):
     return format_data(raw_data, player_id, id_name_map)
 
 
-if __name__ == "__main__":
+def fetch_all_players_data():
+    """
+    Fetches and formats data for all players concurrently, then combines into a single DataFrame,
+    and saves to a CSV file.
+    """
+    print("Starting to fetch all player data...")
+
     id_name_map = get_player_details()
     player_ids = list(id_name_map.keys())
     all_players_data = []
@@ -136,7 +142,7 @@ if __name__ == "__main__":
         for future in tqdm(
             concurrent.futures.as_completed(future_to_player),
             total=len(player_ids),
-            desc="Fetching player data",
+            desc="Fetching latest player data",
         ):
             try:
                 formatted_df = future.result()
@@ -150,7 +156,7 @@ if __name__ == "__main__":
         print("\nCombining all player data...")
         combined_df = pd.concat(all_players_data, ignore_index=True)
         combined_df.sort_values(by=["round", "name"], inplace=True)
-        combined_df.to_csv("players_data/merged_gw_25_26.csv", index=False)
-        print("✅ All player data saved to players_data/merged_gw_25_26.csv")
+        combined_df.to_csv("data/players_data/merged_gw_25_26.csv", index=False)
+        print("✅ All player data saved to data/players_data/merged_gw_25_26.csv")
     else:
         print("No player data was successfully fetched.")
