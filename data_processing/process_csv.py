@@ -64,6 +64,7 @@ def process_df(original_df, team_data_file_path: str, is_training=True):
     # Drop rows where target_score is NaN (last gameweek for each player)
     if is_training:
         cleaned_df.dropna(subset=["target_score"], inplace=True)
+        cleaned_df.dropna(subset=["minutes_next"], inplace=True)
 
     # Change boolean values to integers (0 and 1)
     boolean_columns = ["pos_DEF", "pos_FWD", "pos_GK", "pos_MID", "next_is_home"]

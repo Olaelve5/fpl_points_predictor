@@ -66,6 +66,9 @@ def add_columns(df, team_data_file_path=None):
     # Add target score column
     df["target_score"] = df.groupby("name")["total_points"].shift(-1)
 
+    # Add target minutes column
+    df["minutes_next"] = df.groupby("name")["minutes"].shift(-1)
+
     return df
 
 

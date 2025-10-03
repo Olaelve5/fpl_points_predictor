@@ -3,12 +3,14 @@ from utils.get_training_test_data import get_train_test_data
 from models_operations.plot_model import plot_predictions
 
 
-def train_model(model, save_path, plot=True, with_sample_weights=True):
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
-
-    # # fill nan with 0
-    # X_train.fillna(0, inplace=True)
-    # X_test.fillna(0, inplace=True)
+def train_model(
+    model,
+    training_data,
+    save_path,
+    plot=True,
+    with_sample_weights=True,
+):
+    X_train, X_test, y_train_log, y_test_log = training_data
 
     if with_sample_weights:
         sample_weights = y_train_log.clip(lower=1, upper=3)

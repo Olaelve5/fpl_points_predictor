@@ -4,8 +4,7 @@ from utils.load_csv_to_df import load_csv_to_df
 import joblib
 
 
-
-def make_predictions(model, raw_df):
+def make_predictions(model, raw_df, is_minutes_model=False):
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
 
     processed_df = process_df(
@@ -25,7 +24,6 @@ def make_predictions(model, raw_df):
 
     latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
     round_to_predict = latest_completed_round + 1
-
     rows_to_predict = processed_df[processed_df["round"] == round_to_predict - 1]
 
     print(f"Features shape for prediction: {rows_to_predict.shape}")
@@ -35,9 +33,24 @@ def make_predictions(model, raw_df):
 
     results_df = identifiers.loc[rows_to_predict.index].copy()
     results_df["round_predicted"] = round_to_predict
-    results_df["predicted_points"] = y_pred
-    results_df.sort_values(by="predicted_points", ascending=False, inplace=True)
-    results_df["predicted_points"] = results_df["predicted_points"].round(1)
+
+    if not is_minutes_model:
+        results_df["predicted_points"] = y_pred
+        results_df.sort_values(by="predicted_points", ascending=False, inplace=True)
+        results_df["predicted_points"] = results_df["predicted_points"].round(1)
+    else:
+        results_df["predicted_minutes"] = np.clip(y_pred, 0, 90)  # Clip to valid range
+
+        # 90 mins threshold
+        starter_threshold = 75
+        # If predicted minutes are above the threshold, set them to 90
+        results_df.loc[
+            results_df["predicted_minutes"] > starter_threshold, "predicted_minutes"
+        ] = 90
+
+        results_df.sort_values(by="predicted_minutes", ascending=False, inplace=True)
+        results_df["predicted_minutes"] = results_df["predicted_minutes"].round(0)
+
     print(results_df.head(20))
 
     results_df.to_csv("data/prediction_data/predicted_player_scores.csv", index=False)

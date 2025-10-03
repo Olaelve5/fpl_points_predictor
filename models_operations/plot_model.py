@@ -70,7 +70,7 @@ def plot_data(df):
 
 
 if __name__ == "__main__":
-    model = joblib.load("data/saved_models/stacking_model.pkl")
+    model = joblib.load("data/saved_models/minutes_model.pkl")
 
     X_train, X_test, y_train_log, y_test_log = get_train_test_data()
 

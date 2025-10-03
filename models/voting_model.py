@@ -9,6 +9,8 @@ from models_operations.train import train_model
 from models_operations.test import compare_model_to_baseline
 from utils.get_training_test_data import get_train_test_data
 import numpy as np
+from utils.load_csv_to_df import load_csv_to_df
+from models_operations.predict import make_predictions
 
 
 base_models = [
@@ -58,11 +60,21 @@ model = VotingRegressor(estimators=base_models, n_jobs=-1, verbose=True)
 
 
 if __name__ == "__main__":
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
+    training_data = get_train_test_data()
+    X_train, X_test, y_train_log, y_test_log = training_data
 
-    trained_model = train_model(model, "data/saved_models/voting_model.pkl", plot=True)
+    trained_model = train_model(
+        model, training_data, "data/saved_models/voting_model.pkl", plot=True
+    )
 
     model_preds = np.expm1(trained_model.predict(X_test))
     compare_model_to_baseline(model_preds, np.expm1(y_test_log), X_test)
 
     print("Training complete.")
+
+    # Make predictions on new data
+    raw_df = load_csv_to_df(
+        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
+    )
+
+    make_predictions(trained_model, raw_df)

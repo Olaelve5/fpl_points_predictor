@@ -17,7 +17,6 @@ def rmsle(y_true, y_pred):
 
 
 def test_model(model_preds, y_test):
-
     mae = mean_absolute_error(y_test, model_preds)
     mse = mean_squared_error(y_test, model_preds)
     rmse = np.sqrt(mse)  # A more direct way to get RMSE
@@ -27,9 +26,15 @@ def test_model(model_preds, y_test):
     return mae, rmse, r2, rmsle_score
 
 
-def compare_model_to_baseline(other_model_preds, y_test, X_test):
+def compare_model_to_baseline(
+    other_model_preds, y_test, X_test, is_minutes_model=False
+):
     baseline_model = BaselineModel()
-    baseline_predictions_raw = baseline_model.predict(X_test)
+    if is_minutes_model:
+        baseline_predictions_raw = baseline_model.predict_minutes(X_test)
+    else:
+        baseline_predictions_raw = baseline_model.predict(X_test)
+
     baseline_model_preds = np.expm1(baseline_predictions_raw)
 
     # Print Baseline Metrics
@@ -54,13 +59,3 @@ def compare_model_to_baseline(other_model_preds, y_test, X_test):
     print(f"RMSE Improvement: {baseline_rmse - other_rmse:.2f}")
     print(f"R^2 Improvement: {other_r2 - baseline_r2:.2f}")
     print(f"RMSLE Improvement: {baseline_rmsle - other_rmsle:.2f}")
-
-
-if __name__ == "__main__":
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
-
-    other_model = joblib.load("saved_models/lgbm_model.pkl")
-    other_model_predictions_raw = other_model.predict(X_test)
-    other_model_predictions = np.expm1(other_model_predictions_raw)
-
-    compare_model_to_baseline(other_model_predictions, np.expm1(y_test_log), X_test)
