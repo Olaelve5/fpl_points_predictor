@@ -8,12 +8,11 @@ from utils.load_csv_to_df import load_csv_to_df
 
 model = LGBMRegressor(
     n_estimators=1000,
-    learning_rate=0.01,
+    learning_rate=0.005,
     num_leaves=50,
     random_state=42,
     n_jobs=-1,
-    alpha=0.8,
-    reg_lambda=1.0,
+    alpha=0.80,
 )
 
 
@@ -29,13 +28,10 @@ if __name__ == "__main__":
         plot=True,
     )
 
-    model_preds = np.expm1(trained_model.predict(X_test))
-    model_preds = np.clip(model_preds, 0, 90)  # Clip predictions to valid range
+    model_preds = trained_model.predict(X_test)
 
     # Compare to baseline
-    compare_model_to_baseline(
-        model_preds, np.expm1(y_test_log), X_test, is_minutes_model=True
-    )
+    compare_model_to_baseline(model_preds, y_test_log, X_test, is_minutes_model=True)
 
     # Make predictions on new data
     raw_df = load_csv_to_df(

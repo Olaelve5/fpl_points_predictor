@@ -32,10 +32,10 @@ def compare_model_to_baseline(
     baseline_model = BaselineModel()
     if is_minutes_model:
         baseline_predictions_raw = baseline_model.predict_minutes(X_test)
+        baseline_model_preds = baseline_predictions_raw
     else:
         baseline_predictions_raw = baseline_model.predict(X_test)
-
-    baseline_model_preds = np.expm1(baseline_predictions_raw)
+        baseline_model_preds = np.expm1(baseline_predictions_raw)
 
     # Print Baseline Metrics
     baseline_mae, baseline_rmse, baseline_r2, baseline_rmsle = test_model(

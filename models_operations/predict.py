@@ -41,12 +41,12 @@ def make_predictions(model, raw_df, is_minutes_model=False):
     else:
         results_df["predicted_minutes"] = np.clip(y_pred, 0, 90)  # Clip to valid range
 
-        # 90 mins threshold
-        starter_threshold = 75
-        # If predicted minutes are above the threshold, set them to 90
-        results_df.loc[
-            results_df["predicted_minutes"] > starter_threshold, "predicted_minutes"
-        ] = 90
+        # # 90 mins threshold
+        # starter_threshold = 75
+        # # If predicted minutes are above the threshold, set them to 90
+        # results_df.loc[
+        #     results_df["predicted_minutes"] > starter_threshold, "predicted_minutes"
+        # ] = 90
 
         results_df.sort_values(by="predicted_minutes", ascending=False, inplace=True)
         results_df["predicted_minutes"] = results_df["predicted_minutes"].round(0)
@@ -58,7 +58,7 @@ def make_predictions(model, raw_df, is_minutes_model=False):
 
 
 if __name__ == "__main__":
-    model = joblib.load("data/saved_models/voting_model.pkl")
+    model = joblib.load("data/saved_models/minutes_model.pkl")
 
     raw_df = load_csv_to_df(
         "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"

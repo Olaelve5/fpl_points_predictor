@@ -5,7 +5,7 @@ from utils.team_id_name_map import team_id_name_map
 
 def add_columns(df, team_data_file_path=None):
     # EWMA configuration
-    span_size = 6
+    span_size = 4
 
     # Define columns to calculate EWMA for with their decimal places
     ewma_columns = {
@@ -42,6 +42,9 @@ def add_columns(df, team_data_file_path=None):
     position_dummies = pd.get_dummies(df["position"], prefix="pos")
     df = pd.concat([df, position_dummies], axis=1)
     df.drop("position", axis=1, inplace=True)
+
+    # Add rolling average of minutes played
+    df = add_rolling_average_minutes(df, window_size=3)
 
     # Add next fixture column
     df["next_fixture"] = df.groupby("name")["opponent_team"].shift(-1)
@@ -134,4 +137,14 @@ def add_self_team_strength(df, teams_file_path):
         is_home, team_id.map(defense_home_map), team_id.map(defense_away_map)
     )
 
+    return df
+
+
+def add_rolling_average_minutes(df, window_size=3):
+    """Function to add rolling average of minutes played over a specified window size."""
+    df["rolling_avg_minutes"] = (
+        df.groupby("name")["minutes"]
+        .transform(lambda x: x.rolling(window=window_size, min_periods=1).mean())
+        .round(1)
+    )
     return df

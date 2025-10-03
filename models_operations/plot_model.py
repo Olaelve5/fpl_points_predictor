@@ -7,9 +7,6 @@ from utils.get_training_test_data import get_train_test_data
 
 
 def plot_predictions(y_test, y_pred):
-    y_test = np.expm1(y_test)
-    y_pred = np.expm1(y_pred)
-
     plt.figure(figsize=(10, 6))
     plt.scatter(y_test, y_pred, alpha=0.5)
     plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], "r--")
@@ -72,7 +69,7 @@ def plot_data(df):
 if __name__ == "__main__":
     model = joblib.load("data/saved_models/minutes_model.pkl")
 
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
+    X_train, X_test, y_train_log, y_test_log = get_train_test_data(minutes_training=True)
 
     # plot_target_distribution(y_test_log)
     plot_permutations(model, X_test, y_test_log)

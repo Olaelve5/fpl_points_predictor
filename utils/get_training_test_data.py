@@ -5,7 +5,7 @@ from sklearn.model_selection import train_test_split
 from utils.load_csv_to_df import load_csv_to_df
 
 
-def get_train_test_data(minutes_training=False):
+def get_train_test_data(minutes_training=False, minutes_classifier=False):
     try:
         original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
     except FileNotFoundError:
@@ -14,10 +14,15 @@ def get_train_test_data(minutes_training=False):
         )
         return None, None, None, None
 
+    original_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
+
     features = original_df.drop(columns=["target_score", "minutes_next"])
 
     if minutes_training:
-        target = original_df["minutes_next"]
+        if minutes_classifier:
+            target = (original_df["minutes_next"] > 0).astype(int)
+        else:
+            target = original_df["minutes_next"]
     else:
         target = original_df["target_score"]
 
@@ -35,12 +40,28 @@ def get_train_test_data(minutes_training=False):
         "yellow_cards",
         "recoveries",
         "clearances_blocks_interceptions",
-        # "ewma_minutes",
         "defensive_contribution",
         "ewma_gc",
         "expected_goal_involvements",
         "ewma_bps",
     ]
+
+    if minutes_training:
+        columns_to_drop.extend(
+            [
+                "ewma_points",
+                "ewma_minutes",
+                "ewma_creativity",
+                "creativity",
+                "ict_index",
+                "pos_FWD",
+                "pos_DEF",
+                "self_team_attack_rating",
+                "self_team_defence_rating",
+                "ewma_def_contr",
+                "next_fixture_def_atk_ratio",
+            ]
+        )
 
     features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
@@ -50,8 +71,12 @@ def get_train_test_data(minutes_training=False):
     )
 
     # Handle skewed target
-    y_train_log = np.log1p(y_train)
-    y_test_log = np.log1p(y_test)
+    if not minutes_training:
+        y_train_log = np.log1p(y_train)
+        y_test_log = np.log1p(y_test)
+    else:
+        y_train_log = y_train
+        y_test_log = y_test
 
     # Save feature order for later use in predictions
     feature_order = X_train.columns.tolist()
