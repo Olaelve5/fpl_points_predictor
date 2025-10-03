@@ -3,9 +3,13 @@ import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
 from utils.load_csv_to_df import load_csv_to_df
+from utils.get_columns_to_drop import get_columns_to_drop
+from utils.add_columns import add_columns
 
 
 def get_train_test_data(minutes_training=False, minutes_classifier=False):
+    """Function to return processed training and test data."""
+
     try:
         original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
     except FileNotFoundError:
@@ -14,55 +18,26 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
         )
         return None, None, None, None
 
-    original_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
+    processed_df = apply_feature_engineering(original_df)
 
-    features = original_df.drop(columns=["target_score", "minutes_next"])
+    # Drop target columns
+    processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
+    features = processed_df.drop(columns=["target_score", "minutes_next"])
 
+    # Set the target type based on training type
     if minutes_training:
         if minutes_classifier:
-            target = (original_df["minutes_next"] > 0).astype(int)
+            target = (processed_df["minutes_next"] > 0).astype(int)
         else:
-            target = original_df["minutes_next"]
+            target = processed_df["minutes_next"]
     else:
-        target = original_df["target_score"]
+        target = processed_df["target_score"]
 
+    # Clip target in case of negative score
     target.clip(lower=0, inplace=True)
 
-    # Drop unimportant features
-    columns_to_drop = [
-        "threat",
-        "ewma_threat",
-        "ewma_xA",
-        "ewma_xG",
-        "influence",
-        "tackles",
-        "ewma_cs",
-        "yellow_cards",
-        "recoveries",
-        "clearances_blocks_interceptions",
-        "defensive_contribution",
-        "ewma_gc",
-        "expected_goal_involvements",
-        "ewma_bps",
-    ]
-
-    if minutes_training:
-        columns_to_drop.extend(
-            [
-                "ewma_points",
-                "ewma_minutes",
-                "ewma_creativity",
-                "creativity",
-                "ict_index",
-                "pos_FWD",
-                "pos_DEF",
-                "self_team_attack_rating",
-                "self_team_defence_rating",
-                "ewma_def_contr",
-                "next_fixture_def_atk_ratio",
-            ]
-        )
-
+    # Drop unwanted columns
+    columns_to_drop = get_columns_to_drop(minutes_training)
     features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
     # Split the data into training and testing sets - 80% train, 20% test
@@ -82,4 +57,35 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     feature_order = X_train.columns.tolist()
     joblib.dump(feature_order, "data/saved_models/feature_order.pkl")
 
+    # Save data for inspection
+    X_train.to_csv("data/training_data/X_train.csv", index=False)
+    X_test.to_csv("data/training_data/X_test.csv", index=False)
+    y_train.to_csv("data/training_data/y_train.csv", index=False)
+    y_test.to_csv("data/training_data/y_test.csv", index=False)
+
     return X_train, X_test, y_train_log, y_test_log
+
+
+def apply_feature_engineering(df):
+    """Applies feature engineering in groups based on seasons."""
+    base_team_file_path = (
+        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
+    )
+    processed_seasons = []
+
+    for season, season_df in df.groupby("season"):
+        full_path = f"{base_team_file_path}{season}.csv"
+        processed_season_df = add_columns(season_df, full_path)
+        processed_seasons.append(processed_season_df)
+
+    combined_df = pd.concat(processed_seasons, ignore_index=True)
+
+    # Remove players with position 'AM' (assistant managers)
+    combined_df["pos_AM"] = combined_df["pos_AM"].fillna(0)
+    combined_df = combined_df[combined_df["pos_AM"] == 0].copy()
+    combined_df.drop(columns=["pos_AM"], inplace=True, errors="ignore")
+
+    # Ensure 'next_is_home' is integer type
+    combined_df["next_is_home"] = combined_df["next_is_home"].fillna(0).astype(int)
+
+    return combined_df

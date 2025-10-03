@@ -1,17 +1,10 @@
 import numpy as np
-from data_processing.process_csv import process_df
 from utils.load_csv_to_df import load_csv_to_df
 import joblib
 
 
 def make_predictions(model, raw_df, is_minutes_model=False):
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
-
-    processed_df = process_df(
-        raw_df,
-        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
-        is_training=False,
-    )
 
     # Re-order columns to fit the training data order
     feature_order = joblib.load("data/saved_models/feature_order.pkl")

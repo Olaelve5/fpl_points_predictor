@@ -1,6 +1,6 @@
 import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
-from data_processing.add_columns import add_columns
+from utils.add_columns import add_columns
 
 player_data_base_path = (
     "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_"
