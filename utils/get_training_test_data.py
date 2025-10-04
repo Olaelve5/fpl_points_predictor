@@ -20,6 +20,10 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     processed_df = apply_feature_engineering(original_df)
 
+    # If minutes training for regressor, filter to only players who played
+    if minutes_training and not minutes_classifier:
+        processed_df = processed_df[processed_df["minutes_next"] > 10].copy()
+
     # Drop target columns
     processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
     features = processed_df.drop(columns=["target_score", "minutes_next"])
@@ -27,7 +31,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     # Set the target type based on training type
     if minutes_training:
         if minutes_classifier:
-            target = (processed_df["minutes_next"] > 0).astype(int)
+            target = (processed_df["minutes_next"] > 10).astype(int)
         else:
             target = processed_df["minutes_next"]
     else:
@@ -55,7 +59,10 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     # Save feature order for later use in predictions
     feature_order = X_train.columns.tolist()
-    joblib.dump(feature_order, "data/saved_models/feature_order.pkl")
+    if minutes_training:
+        joblib.dump(feature_order, "data/saved_models/minutes_feature_order.pkl")
+    else:
+        joblib.dump(feature_order, "data/saved_models/feature_order.pkl")
 
     # Save data for inspection
     X_train.to_csv("data/training_data/X_train.csv", index=False)
@@ -88,7 +95,7 @@ def apply_feature_engineering(df):
     return combined_df
 
 
-def get_prediction_data(raw_df):
+def get_prediction_data(raw_df, is_minutes_model=False):
     """Function to process raw data for making predictions."""
 
     processed_df = add_columns(
@@ -102,7 +109,7 @@ def get_prediction_data(raw_df):
     )
 
     # Drop unwanted columns
-    columns_to_drop = get_columns_to_drop()
+    columns_to_drop = get_columns_to_drop(is_minutes_model)
     processed_df.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
     latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()

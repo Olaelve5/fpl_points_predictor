@@ -1,6 +1,6 @@
 import joblib
-from utils.get_training_test_data import get_train_test_data
 from models_operations.plot_model import plot_predictions
+import numpy as np
 
 
 def train_model(
@@ -9,6 +9,7 @@ def train_model(
     save_path,
     plot=True,
     with_sample_weights=True,
+    is_minutes_model=False,
 ):
     X_train, X_test, y_train_log, y_test_log = training_data
 
@@ -22,8 +23,14 @@ def train_model(
     joblib.dump(model, save_path)
     print(f"Model saved to {save_path}")
 
+    model_preds = model.predict(X_test)
+    
+    if not is_minutes_model:
+        model_preds = np.expm1(model_preds)
+        y_test_log = np.expm1(y_test_log)
+
     # Plot predictions
     if plot:
-        plot_predictions(y_test_log, model.predict(X_test))
+        plot_predictions(y_test_log, model_preds)
 
     return model

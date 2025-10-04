@@ -19,9 +19,12 @@ model = LGBMRegressor(
 
 
 if __name__ == "__main__":
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
+    training_data = get_train_test_data()
+    X_train, X_test, y_train_log, y_test_log = training_data
 
-    trained_model = train_model(model, "data/saved_models/lgbm_model.pkl", plot=True)
+    trained_model = train_model(
+        model, training_data, "data/saved_models/lgbm_model.pkl", plot=True
+    )
 
     model_preds = np.expm1(trained_model.predict(X_test))
     compare_model_to_baseline(model_preds, np.expm1(y_test_log), X_test)
