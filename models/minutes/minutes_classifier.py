@@ -4,7 +4,7 @@ from utils.get_training_test_data import get_train_test_data
 from sklearn.metrics import confusion_matrix, RocCurveDisplay
 import matplotlib.pyplot as plt
 import seaborn as sns
-from models_operations.plot_model import plot_permutations
+import lightgbm as lgb
 
 
 model = LGBMClassifier(
@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     # 2. Add the parameter to your model
     model = LGBMClassifier(
-        n_estimators=457,
+        n_estimators=2000,
         learning_rate=0.01,
         num_leaves=63,
         random_state=42,
@@ -71,7 +71,15 @@ if __name__ == "__main__":
     )
     # ------------------------------------
 
-    trained_model = model.fit(X_train, y_train)
+    trained_model = model.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_test, y_test)],  # Provide a validation set
+        eval_metric="auc",  # Use AUC to monitor performance
+        callbacks=[
+            lgb.early_stopping(100, verbose=True)
+        ],  # Stop if AUC doesn't improve for 100 rounds
+    )
 
     # Save the model to a file
     pd.to_pickle(trained_model, "data/saved_models/minutes_classifier_model.pkl")

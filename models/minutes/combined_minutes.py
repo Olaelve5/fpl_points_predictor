@@ -21,11 +21,25 @@ def combined_minutes_model():
         "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
     )
 
+    identifiers = raw_df[["name", "team", "position", "value"]].copy()
+
     rows_to_predict, _ = get_prediction_data(raw_df, is_minutes_model=True)
     rows_to_predict = rows_to_predict[feature_order]
 
     classifier_preds = classifier_model.predict_proba(rows_to_predict)[:, 1]
     regressor_preds = regressor_model.predict(rows_to_predict)
+
+    # Apply full game threshold
+    full_game_threshold = 82
+    regressor_preds = np.where(
+        regressor_preds > full_game_threshold, 90, regressor_preds
+    )
+
+    # Apply no minutes threshold
+    no_minutes_threshold = 5
+    classifier_preds = np.where(
+        classifier_preds < no_minutes_threshold / 100, 0, classifier_preds
+    )
 
     print("Max classifier prediction:", classifier_preds.max())
     print("Min classifier prediction:", classifier_preds.min())
@@ -36,10 +50,31 @@ def combined_minutes_model():
     final_minutes_preds = classifier_preds * regressor_preds
     final_minutes_preds = np.round(classifier_preds * regressor_preds).astype(int)
 
-    return final_minutes_preds
+    results_df = identifiers.loc[rows_to_predict.index].copy()
+    results_df["predicted_minutes"] = final_minutes_preds
+
+    # Set all GK predictions to 90 minutes if above threshold
+    gk_threshold = 60
+    gk_mask = results_df["position"] == "GK"
+    results_df.loc[
+        gk_mask & (results_df["predicted_minutes"] > gk_threshold), "predicted_minutes"
+    ] = 90
+
+    # Set all predictions above 87 to 90 minutes
+    results_df.loc[results_df["predicted_minutes"] > 87, "predicted_minutes"] = 90
+
+    results_df.sort_values(by="predicted_minutes", ascending=False, inplace=True)
+
+    return results_df
 
 
 if __name__ == "__main__":
     minutes_predictions = combined_minutes_model()
-    print("Combined Minutes Predictions:")
-    print(minutes_predictions)
+
+    print(minutes_predictions.head(20))
+
+    # Save to CSV
+    minutes_predictions.to_csv(
+        "data/prediction_data/combined_minutes_predictions.csv", index=False
+    )
+    print("Combined minutes predictions saved to combined_minutes_predictions.csv")
