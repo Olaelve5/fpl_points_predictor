@@ -65,6 +65,7 @@ def get_columns_to_drop(is_minutes_training=False):
                 "ewma_minutes",
                 "ewma_creativity",
                 "ewma_def_contr",
+                "ewma_xGI",
                 # Other columns
                 "creativity",
                 "ict_index",

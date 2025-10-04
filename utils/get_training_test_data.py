@@ -85,7 +85,32 @@ def apply_feature_engineering(df):
     combined_df = combined_df[combined_df["pos_AM"] == 0].copy()
     combined_df.drop(columns=["pos_AM"], inplace=True, errors="ignore")
 
-    # Ensure 'next_is_home' is integer type
-    combined_df["next_is_home"] = combined_df["next_is_home"].fillna(0).astype(int)
-
     return combined_df
+
+
+def get_prediction_data(raw_df):
+    """Function to process raw data for making predictions."""
+
+    processed_df = add_columns(
+        raw_df,
+        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
+    )
+
+    # Drop target columns if they exist
+    processed_df.drop(
+        columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
+    )
+
+    # Drop unwanted columns
+    columns_to_drop = get_columns_to_drop()
+    processed_df.drop(columns=columns_to_drop, inplace=True, errors="ignore")
+
+    latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
+    # round_to_predict = latest_completed_round + 1
+    round_to_predict = 7
+    rows_to_predict = processed_df[processed_df["round"] == round_to_predict - 1]
+
+    print(f"Shape after processing for prediction: {rows_to_predict.shape}")
+    print(f"Round to predict: {round_to_predict}")
+
+    return rows_to_predict, round_to_predict

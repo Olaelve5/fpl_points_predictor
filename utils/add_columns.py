@@ -48,7 +48,7 @@ def add_columns(df, team_data_file_path=None):
 
     # Add next fixture column
     df["next_fixture"] = df.groupby("name")["opponent_team"].shift(-1)
-    df["next_is_home"] = df.groupby("name")["was_home"].shift(-1)
+    df["next_is_home"] = df.groupby("name")["was_home"].shift(-1).fillna(0).astype(int)
 
     # Add fixture difficulty rating columns
     df = add_fixture_difficulty_rating(df, team_data_file_path)

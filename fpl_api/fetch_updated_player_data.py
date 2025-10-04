@@ -36,6 +36,8 @@ def get_player_details():
             for player in players
         }
 
+        print(f"Fetched details for {len(id_name_map)} players.")
+
         return id_name_map
     except requests.exceptions.RequestException as e:
         print(f"Error fetching player IDs: {e}")
@@ -89,7 +91,7 @@ def format_data(raw_player_data, player_id, id_name_map):
             col for col in fixtures_df.columns if col in history_df.columns
         ]
         fixtures_df_filtered = fixtures_df[columns_to_keep]
-
+        
         player_df = pd.concat([history_df, fixtures_df_filtered], ignore_index=True)
     else:
         player_df = history_df
@@ -160,3 +162,7 @@ def fetch_all_players_data():
         print("✅ All player data saved to data/players_data/merged_gw_25_26.csv")
     else:
         print("No player data was successfully fetched.")
+
+
+if __name__ == "__main__":
+    fetch_all_players_data()

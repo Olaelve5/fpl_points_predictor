@@ -4,6 +4,7 @@ import numpy as np
 from utils.get_training_test_data import get_train_test_data
 from models_operations.test import compare_model_to_baseline
 from utils.load_csv_to_df import load_csv_to_df
+from models_operations.predict import make_predictions
 
 model = LGBMRegressor(
     n_estimators=1000,
@@ -32,7 +33,4 @@ if __name__ == "__main__":
     # Compare to baseline
     compare_model_to_baseline(model_preds, y_test_log, X_test, is_minutes_model=True)
 
-    # Make predictions on new data
-    raw_df = load_csv_to_df(
-        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
-    )
+    make_predictions(trained_model, is_minutes_model=True)

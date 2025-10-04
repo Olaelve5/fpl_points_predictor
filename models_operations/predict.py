@@ -1,28 +1,34 @@
 import numpy as np
 from utils.load_csv_to_df import load_csv_to_df
 import joblib
+from utils.get_training_test_data import get_prediction_data
 
 
-def make_predictions(model, raw_df, is_minutes_model=False):
+def make_predictions(model, is_minutes_model=False):
+    """Function to make predictions using the trained model and latest data."""
+
+    raw_df = load_csv_to_df(
+        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
+    )
+
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
 
     # Re-order columns to fit the training data order
     feature_order = joblib.load("data/saved_models/feature_order.pkl")
-    processed_df = processed_df.reindex(columns=feature_order, fill_value=0)
+    rows_to_predict, round_to_predict = get_prediction_data(raw_df)
+    rows_to_predict = rows_to_predict[feature_order]
 
     # Save to csv for inspection
-    processed_df.to_csv(
+    rows_to_predict.to_csv(
         "data/prediction_data/processed_player_data_for_prediction.csv", index=False
     )
 
-    latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
-    round_to_predict = latest_completed_round + 1
-    rows_to_predict = processed_df[processed_df["round"] == round_to_predict - 1]
-
-    print(f"Features shape for prediction: {rows_to_predict.shape}")
-
     y_pred_log = model.predict(rows_to_predict)
-    y_pred = np.expm1(y_pred_log)
+
+    if is_minutes_model:
+        y_pred = y_pred_log  # No transformation for minutes model
+    else:
+        y_pred = np.expm1(y_pred_log)
 
     results_df = identifiers.loc[rows_to_predict.index].copy()
     results_df["round_predicted"] = round_to_predict
@@ -48,13 +54,3 @@ def make_predictions(model, raw_df, is_minutes_model=False):
 
     results_df.to_csv("data/prediction_data/predicted_player_scores.csv", index=False)
     print("Predictions saved to predicted_player_scores.csv")
-
-
-if __name__ == "__main__":
-    model = joblib.load("data/saved_models/minutes_model.pkl")
-
-    raw_df = load_csv_to_df(
-        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
-    )
-
-    make_predictions(model, raw_df)
