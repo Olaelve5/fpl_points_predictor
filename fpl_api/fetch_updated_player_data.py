@@ -32,6 +32,7 @@ def get_player_details():
                 "name": player["web_name"],
                 "position": position_map.get(player["element_type"], "Unknown"),
                 "team_id": player["team"],
+                "status": player["status"],
             }
             for player in players
         }
@@ -59,6 +60,14 @@ def fetch_player_data(player_id):
         return None
 
     return response.json()
+
+
+def map_status(status):
+    """Simplifies the status codes into three categories."""
+    if status == "a" or status == "d":
+        return "available"
+    else:
+        return "unavailable"
 
 
 def format_data(raw_player_data, player_id, id_name_map):
@@ -91,7 +100,7 @@ def format_data(raw_player_data, player_id, id_name_map):
             col for col in fixtures_df.columns if col in history_df.columns
         ]
         fixtures_df_filtered = fixtures_df[columns_to_keep]
-        
+
         player_df = pd.concat([history_df, fixtures_df_filtered], ignore_index=True)
     else:
         player_df = history_df
@@ -109,6 +118,10 @@ def format_data(raw_player_data, player_id, id_name_map):
     # Add the team name
     team_id = id_name_map.get(player_id, {}).get("team_id")
     player_df["team"] = team_id_name_map().get(team_id, "Unknown Team")
+
+    # Add the player status
+    player_status = id_name_map.get(player_id, {}).get("status", "u")
+    player_df["status"] = map_status(player_status)
 
     return player_df
 

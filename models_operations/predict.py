@@ -14,7 +14,11 @@ def make_predictions(model, is_minutes_model=False):
     identifiers = raw_df[["name", "team", "position", "value"]].copy()
 
     # Re-order columns to fit the training data order
-    feature_order = joblib.load("data/saved_models/feature_order.pkl")
+    if is_minutes_model:
+        feature_order = joblib.load("data/saved_models/minutes_feature_order.pkl")
+    else:
+        feature_order = joblib.load("data/saved_models/feature_order.pkl")
+
     rows_to_predict, round_to_predict = get_prediction_data(raw_df)
     rows_to_predict = rows_to_predict[feature_order]
 

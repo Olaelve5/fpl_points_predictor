@@ -74,6 +74,11 @@ def get_columns_to_drop(is_minutes_training=False):
                 "self_team_attack_rating",
                 "self_team_defence_rating",
                 "next_fixture_def_atk_ratio",
+                # Position dummies
+                "pos_GK",
+                "pos_MID",
+                "pos_FWD",
+                "pos_DEF",
             ]
         )
     return columns_to_drop

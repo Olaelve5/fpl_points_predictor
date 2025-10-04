@@ -72,6 +72,15 @@ def add_columns(df, team_data_file_path=None):
     # Add target minutes column
     df["minutes_next"] = df.groupby("name")["minutes"].shift(-1)
 
+    # If status columns doesn't exist, create it and add data based on minutes
+    if "status" not in df.columns:
+        df["status"] = np.where(df["minutes"] > 0, "available", "unavailable")
+
+    # One-hot encode status
+    status_dummies = pd.get_dummies(df["status"], prefix="status")
+    df = pd.concat([df, status_dummies], axis=1)
+    df.drop("status", axis=1, inplace=True)
+
     print(f"Shape after adding new columns: {df.shape}")
 
     return df

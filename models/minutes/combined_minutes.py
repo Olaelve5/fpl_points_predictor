@@ -21,24 +21,35 @@ def combined_minutes_model():
         "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
     )
 
-    identifiers = raw_df[["name", "team", "position", "value"]].copy()
+    identifiers = raw_df[["name", "team", "position", "value", "status"]].copy()
 
     rows_to_predict, _ = get_prediction_data(raw_df, is_minutes_model=True)
+
     rows_to_predict = rows_to_predict[feature_order]
 
     classifier_preds = classifier_model.predict_proba(rows_to_predict)[:, 1]
     regressor_preds = regressor_model.predict(rows_to_predict)
 
     # Apply full game threshold
-    full_game_threshold = 82
+    full_game_threshold = 85
     regressor_preds = np.where(
         regressor_preds > full_game_threshold, 90, regressor_preds
     )
 
-    # Apply no minutes threshold
-    no_minutes_threshold = 5
+    # Apply the no mins threshold
+    no_mins_threshold = 2
+    regressor_preds = np.where(regressor_preds < no_mins_threshold, 0, regressor_preds)
+
+    # Apply the max probability threshold
+    max_prob_threshold = 0.95
     classifier_preds = np.where(
-        classifier_preds < no_minutes_threshold / 100, 0, classifier_preds
+        classifier_preds > max_prob_threshold, 1.0, classifier_preds
+    )
+
+    # Apply the min probability threshold
+    min_prob_threshold = 0.05
+    classifier_preds = np.where(
+        classifier_preds < min_prob_threshold, 0.0, classifier_preds
     )
 
     print("Max classifier prediction:", classifier_preds.max())
@@ -53,6 +64,12 @@ def combined_minutes_model():
     results_df = identifiers.loc[rows_to_predict.index].copy()
     results_df["predicted_minutes"] = final_minutes_preds
 
+    results_df["raw_classifier_proba"] = classifier_preds
+    results_df["raw_regressor_minutes"] = regressor_preds
+
+    # If the status is 'unavailable', set predicted minutes to 0
+    results_df.loc[results_df["status"] == "unavailable", "predicted_minutes"] = 0
+
     # Set all GK predictions to 90 minutes if above threshold
     gk_threshold = 60
     gk_mask = results_df["position"] == "GK"
@@ -60,8 +77,9 @@ def combined_minutes_model():
         gk_mask & (results_df["predicted_minutes"] > gk_threshold), "predicted_minutes"
     ] = 90
 
-    # Set all predictions above 87 to 90 minutes
-    results_df.loc[results_df["predicted_minutes"] > 87, "predicted_minutes"] = 90
+    results_df.loc[
+        gk_mask & (results_df["predicted_minutes"] <= gk_threshold), "predicted_minutes"
+    ] = 0
 
     results_df.sort_values(by="predicted_minutes", ascending=False, inplace=True)
 

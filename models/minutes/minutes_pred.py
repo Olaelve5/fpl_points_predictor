@@ -5,6 +5,7 @@ from utils.get_training_test_data import get_train_test_data, get_prediction_dat
 from models_operations.test import compare_model_to_baseline
 from utils.load_csv_to_df import load_csv_to_df
 from models_operations.predict import make_predictions
+from models_operations.plot_model import plot_permutations
 
 model = LGBMRegressor(
     n_estimators=1000,
@@ -43,5 +44,8 @@ if __name__ == "__main__":
 
     # Compare to baseline
     compare_model_to_baseline(model_preds, y_test_log, X_test, is_minutes_model=True)
+
+    # Plot feature importance
+    plot_permutations(trained_model, X_test, y_test_log)
 
     make_predictions(trained_model, is_minutes_model=True)
