@@ -81,13 +81,16 @@ def combined_minutes_model():
         gk_mask & (results_df["predicted_minutes"] <= gk_threshold), "predicted_minutes"
     ] = 0
 
-    results_df.sort_values(by="predicted_minutes", ascending=False, inplace=True)
-
     return results_df
 
 
 if __name__ == "__main__":
     minutes_predictions = combined_minutes_model()
+
+    # Sort here
+    minutes_predictions.sort_values(
+        by="predicted_minutes", ascending=False, inplace=True
+    )
 
     print(minutes_predictions.head(20))
 

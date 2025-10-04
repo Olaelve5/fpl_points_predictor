@@ -27,6 +27,7 @@ def get_columns_to_drop(is_minutes_training=False):
         "bonus",
         "bps",
         "clean_sheets",
+        "minutes",
         # Expected stats
         "xP",
         "expected_goals",

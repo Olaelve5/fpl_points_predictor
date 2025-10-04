@@ -42,10 +42,4 @@ if __name__ == "__main__":
     print("Max regressor prediction:", model_preds.max())
     print("Min regressor prediction:", model_preds.min())
 
-    # Compare to baseline
-    compare_model_to_baseline(model_preds, y_test_log, X_test, is_minutes_model=True)
-
-    # Plot feature importance
-    plot_permutations(trained_model, X_test, y_test_log)
-
     make_predictions(trained_model, is_minutes_model=True)

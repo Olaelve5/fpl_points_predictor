@@ -71,10 +71,3 @@ if __name__ == "__main__":
     compare_model_to_baseline(model_preds, np.expm1(y_test_log), X_test)
 
     print("Training complete.")
-
-    # Make predictions on new data
-    raw_df = load_csv_to_df(
-        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
-    )
-
-    make_predictions(trained_model, raw_df)

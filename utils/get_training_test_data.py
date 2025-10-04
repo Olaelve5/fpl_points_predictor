@@ -26,7 +26,10 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     # Drop target columns
     processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
-    features = processed_df.drop(columns=["target_score", "minutes_next"])
+    if minutes_training:
+        features = processed_df.drop(columns=["target_score", "minutes_next"])
+    else:
+        features = processed_df.drop(columns=["target_score"])
 
     # Set the target type based on training type
     if minutes_training:
@@ -106,9 +109,12 @@ def get_prediction_data(raw_df, is_minutes_model=False):
     )
 
     # Drop target columns if they exist
-    processed_df.drop(
-        columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
-    )
+    if is_minutes_model:
+        processed_df.drop(
+            columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
+        )
+    else:
+        processed_df.drop(columns=["target_score"], inplace=True, errors="ignore")
 
     # Drop unwanted columns
     columns_to_drop = get_columns_to_drop(is_minutes_model)

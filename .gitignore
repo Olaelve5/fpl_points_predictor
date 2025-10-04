@@ -46,3 +46,5 @@ saved_plots/
 # OS
 .DS_Store
 EOF
+
+*.txt

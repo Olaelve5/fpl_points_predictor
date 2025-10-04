@@ -67,10 +67,12 @@ model = StackingRegressor(
 
 
 if __name__ == "__main__":
-    X_train, X_test, y_train_log, y_test_log = get_train_test_data()
+    training_data = get_train_test_data()
+    X_train, X_test, y_train_log, y_test_log = training_data
 
     trained_model = train_model(
         model,
+        training_data,
         "data/saved_models/stacking_model.pkl",
         plot=True,
         with_sample_weights=False,
