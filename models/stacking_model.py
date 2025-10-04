@@ -15,8 +15,8 @@ base_models = [
     (
         "lgbm_huber",
         LGBMRegressor(
-            n_estimators=1000,
-            learning_rate=0.005,
+            n_estimators=500,
+            learning_rate=0.01,
             num_leaves=50,
             random_state=42,
             n_jobs=-1,
@@ -29,8 +29,8 @@ base_models = [
     (
         "lgbm_l1",
         LGBMRegressor(
-            n_estimators=500,
-            learning_rate=0.01,
+            n_estimators=1000,
+            learning_rate=0.005,
             max_depth=15,
             random_state=42,
             force_row_wise=True,
@@ -49,7 +49,7 @@ base_models = [
             learning_rate=0.05,
             min_samples_leaf=15,
             max_iter=1200,
-            quantile=0.5,  # Median regression
+            quantile=0.5,
         ),
     ),
 ]
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         training_data,
         "data/saved_models/stacking_model.pkl",
         plot=True,
-        with_sample_weights=False,
+        with_sample_weights=True,
     )
 
     model_preds = np.expm1(trained_model.predict(X_test))

@@ -14,7 +14,7 @@ def train_model(
     X_train, X_test, y_train_log, y_test_log = training_data
 
     if with_sample_weights:
-        sample_weights = y_train_log.clip(lower=1, upper=3)
+        sample_weights = y_train_log + 1
         model.fit(X_train, y_train_log, sample_weight=sample_weights)
     else:
         model.fit(X_train, y_train_log)
@@ -24,7 +24,7 @@ def train_model(
     print(f"Model saved to {save_path}")
 
     model_preds = model.predict(X_test)
-    
+
     if not is_minutes_model:
         model_preds = np.expm1(model_preds)
         y_test_log = np.expm1(y_test_log)

@@ -1,16 +1,12 @@
 from sklearn.ensemble import (
     VotingRegressor,
     HistGradientBoostingRegressor,
-    RandomForestRegressor,
 )
-from sklearn.linear_model import Ridge, Lasso, ElasticNet
 from lightgbm import LGBMRegressor
 from models_operations.train import train_model
 from models_operations.test import compare_model_to_baseline
 from utils.get_training_test_data import get_train_test_data
 import numpy as np
-from utils.load_csv_to_df import load_csv_to_df
-from models_operations.predict import make_predictions
 
 
 base_models = [

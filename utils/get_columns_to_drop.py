@@ -27,7 +27,6 @@ def get_columns_to_drop(is_minutes_training=False):
         "bonus",
         "bps",
         "clean_sheets",
-        "minutes",
         # Expected stats
         "xP",
         "expected_goals",
@@ -50,12 +49,18 @@ def get_columns_to_drop(is_minutes_training=False):
         # Use round instead of GW
         "GW",
         # EWMA columns
-        "ewma_xA",
-        "ewma_xG",
-        "ewma_gc",
-        "ewma_bps",
-        "ewma_threat",
-        "ewma_cs",
+        # "ewma_xA",
+        # "ewma_xG",
+        # "ewma_gc",
+        # "ewma_bps",
+        # "ewma_threat",
+        # "ewma_cs",
+        # "ewma_creativity",
+        # Available status
+        "status_available",
+        "status_unavailable",
+
+
     ]
 
     if is_minutes_training:

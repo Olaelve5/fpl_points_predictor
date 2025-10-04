@@ -20,9 +20,9 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     processed_df = apply_feature_engineering(original_df)
 
-    # If minutes training for regressor, filter to only players who played
+    # If minutes training and not minutes classifier, filter to only players who played
     if minutes_training and not minutes_classifier:
-        processed_df = processed_df[processed_df["minutes_next"] > 5].copy()
+        processed_df = processed_df[processed_df["minutes_next"] >= 1].copy()
 
     # Drop target columns
     processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
