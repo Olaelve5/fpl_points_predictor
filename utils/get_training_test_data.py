@@ -49,6 +49,9 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     columns_to_drop = get_columns_to_drop(minutes_training)
     features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
+    # Also drop name and team columns if they exist
+    features.drop(columns=["name", "team"], errors="ignore", inplace=True)
+
     # Split the data into training and testing sets - 80% train, 20% test
     X_train, X_test, y_train, y_test = train_test_split(
         features, target, test_size=0.20, random_state=50
@@ -98,34 +101,3 @@ def apply_feature_engineering(df):
     combined_df.drop(columns=["pos_AM"], inplace=True, errors="ignore")
 
     return combined_df
-
-
-def get_prediction_data(raw_df, is_minutes_model=False):
-    """Function to process raw data for making predictions."""
-
-    processed_df = add_columns(
-        raw_df,
-        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
-    )
-
-    # Drop target columns if they exist
-    if is_minutes_model:
-        processed_df.drop(
-            columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
-        )
-    else:
-        processed_df.drop(columns=["target_score"], inplace=True, errors="ignore")
-
-    # Drop unwanted columns
-    columns_to_drop = get_columns_to_drop(is_minutes_model)
-    processed_df.drop(columns=columns_to_drop, inplace=True, errors="ignore")
-
-    latest_completed_round = processed_df.dropna(subset=["starts"])["round"].max()
-    # round_to_predict = latest_completed_round + 1
-    round_to_predict = 7
-    rows_to_predict = processed_df[processed_df["round"] == round_to_predict - 1]
-
-    print(f"Shape after processing for prediction: {rows_to_predict.shape}")
-    print(f"Round to predict: {round_to_predict}")
-
-    return rows_to_predict, round_to_predict

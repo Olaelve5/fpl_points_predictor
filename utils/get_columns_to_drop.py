@@ -3,8 +3,9 @@ def get_columns_to_drop(is_minutes_training=False):
 
     columns_to_drop = [
         # Identification columns
-        "name",
-        "team",
+        # Dont drop these as they are needed for merging and identification
+        # "name",
+        # "team",
         "element",
         "modified",
         "season",
@@ -41,7 +42,7 @@ def get_columns_to_drop(is_minutes_training=False):
         # fixture info
         "team_a_score",
         "team_h_score",
-        "opponent_team",
+        # "opponent_team",
         "was_home",
         "next_fixture",
         "fixture",

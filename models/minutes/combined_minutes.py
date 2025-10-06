@@ -1,11 +1,10 @@
 import joblib
 import pandas as pd
-from utils.get_training_test_data import get_prediction_data
 from utils.load_csv_to_df import load_csv_to_df
 import numpy as np
 
 
-def combined_minutes_model():
+def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None):
     try:
         classifier_model = pd.read_pickle(
             "data/saved_models/minutes_classifier_model.pkl"
@@ -23,7 +22,12 @@ def combined_minutes_model():
 
     identifiers = raw_df[["name", "team", "position", "value", "status"]].copy()
 
-    rows_to_predict, _ = get_prediction_data(raw_df, is_minutes_model=True)
+    rows_to_predict = rows_to_predict[
+        rows_to_predict["round"] == last_completed_round
+    ].copy()
+
+    # Clean rows to predict
+    rows_to_predict.drop(columns=["name", "team", "opponent_team"], errors="ignore", inplace=True)
 
     rows_to_predict = rows_to_predict[feature_order]
 
@@ -85,7 +89,7 @@ def combined_minutes_model():
 
 
 if __name__ == "__main__":
-    minutes_predictions = combined_minutes_model()
+    minutes_predictions = minutes_prediction_pipeline()
 
     # Sort here
     minutes_predictions.sort_values(
