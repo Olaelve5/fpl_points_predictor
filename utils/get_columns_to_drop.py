@@ -3,7 +3,7 @@ def get_columns_to_drop(is_minutes_training=False):
 
     columns_to_drop = [
         # Identification columns
-        # Dont drop these as they are needed for merging and identification
+        # Dont drop name and team as they are needed for merging and identification
         # "name",
         # "team",
         "element",
@@ -26,6 +26,8 @@ def get_columns_to_drop(is_minutes_training=False):
         "threat",
         "influence",
         "bonus",
+        "starts",
+        "creativity",
         "bps",
         "clean_sheets",
         # Expected stats
@@ -50,13 +52,13 @@ def get_columns_to_drop(is_minutes_training=False):
         # Use round instead of GW
         "GW",
         # EWMA columns
-        # "ewma_xA",
-        # "ewma_xG",
-        # "ewma_gc",
+        "ewma_xA",
+        "ewma_xG",
+        "ewma_gc",
         # "ewma_bps",
-        # "ewma_threat",
+        "ewma_threat",
         # "ewma_cs",
-        # "ewma_creativity",
+        "ewma_creativity",
         # Available status
         "status_available",
         "status_unavailable",

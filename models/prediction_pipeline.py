@@ -85,7 +85,7 @@ def prediction_pipeline():
 
     # Use the identifiers from the minutes prediction df
     final_df = identifiers_df[
-        ["name", "team", "position", "value", "round", "opponent_team"]
+        ["name", "team", "position", "value", "round", "opponent_team", "minutes_next"]
     ].copy()
     final_df["predicted_points"] = predicted_points
 

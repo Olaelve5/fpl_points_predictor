@@ -1,7 +1,7 @@
 import numpy as np
 from utils.load_csv_to_df import load_csv_to_df
 import joblib
-from utils.get_training_test_data import get_prediction_data
+from utils.get_prediction_data import get_rows_to_predict
 
 
 def make_predictions(model, is_minutes_model=False):
@@ -19,7 +19,7 @@ def make_predictions(model, is_minutes_model=False):
     else:
         feature_order = joblib.load("data/saved_models/feature_order.pkl")
 
-    rows_to_predict, round_to_predict = get_prediction_data(raw_df)
+    rows_to_predict, round_to_predict = get_rows_to_predict(raw_df)
     rows_to_predict = rows_to_predict[feature_order]
 
     # Save to csv for inspection

@@ -2,6 +2,8 @@ import joblib
 import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
 import numpy as np
+from utils.get_prediction_data import get_rows_to_predict
+from utils.get_last_completed_round import get_last_completed_round
 
 
 def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None):
@@ -27,7 +29,9 @@ def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None)
     ].copy()
 
     # Clean rows to predict
-    rows_to_predict.drop(columns=["name", "team", "opponent_team"], errors="ignore", inplace=True)
+    rows_to_predict.drop(
+        columns=["name", "team", "opponent_team"], errors="ignore", inplace=True
+    )
 
     rows_to_predict = rows_to_predict[feature_order]
 
@@ -35,7 +39,7 @@ def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None)
     regressor_preds = regressor_model.predict(rows_to_predict)
 
     # Apply full game threshold
-    full_game_threshold = 85
+    full_game_threshold = 88
     regressor_preds = np.where(
         regressor_preds > full_game_threshold, 90, regressor_preds
     )
@@ -89,7 +93,16 @@ def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None)
 
 
 if __name__ == "__main__":
-    minutes_predictions = minutes_prediction_pipeline()
+    last_completed_round = get_last_completed_round()
+    rows_to_predict = get_rows_to_predict(
+        last_completed_round=last_completed_round, is_minutes_model=True
+    )
+
+    print(f"Columns in rows_to_predict: {rows_to_predict.columns.tolist()}")
+
+    minutes_predictions = minutes_prediction_pipeline(
+        rows_to_predict=rows_to_predict, last_completed_round=last_completed_round
+    )
 
     # Sort here
     minutes_predictions.sort_values(

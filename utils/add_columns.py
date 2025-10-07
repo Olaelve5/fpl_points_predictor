@@ -8,7 +8,7 @@ from utils.fixture_difficulty import (
 
 def add_columns(df, team_data_file_path=None):
     # EWMA configuration
-    span_size = 4
+    span_size = 3
 
     # Define columns to calculate EWMA for with their decimal places
     ewma_columns = {

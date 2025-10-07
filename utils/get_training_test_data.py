@@ -50,7 +50,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
     # Also drop name and team columns if they exist
-    features.drop(columns=["name", "team"], errors="ignore", inplace=True)
+    features.drop(columns=["name", "team", "opponent_team"], errors="ignore", inplace=True)
 
     # Split the data into training and testing sets - 80% train, 20% test
     X_train, X_test, y_train, y_test = train_test_split(
