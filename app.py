@@ -52,9 +52,6 @@ if df is not None:
     else:
         filtered_df = df
 
-    # Sort the filtered dataframe
-    filtered_df = filtered_df.sort_values(by="predicted_points", ascending=False)
-
     st.markdown("#### Predicted Points for next gameweek")
 
     # Show number of players displayed

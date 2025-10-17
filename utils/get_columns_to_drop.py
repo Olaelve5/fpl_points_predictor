@@ -62,8 +62,6 @@ def get_columns_to_drop(is_minutes_training=False):
         # Available status
         "status_available",
         "status_unavailable",
-
-
     ]
 
     if is_minutes_training:

@@ -39,7 +39,7 @@ def minutes_prediction_pipeline(rows_to_predict=None, last_completed_round=None)
     regressor_preds = regressor_model.predict(rows_to_predict)
 
     # Apply full game threshold
-    full_game_threshold = 88
+    full_game_threshold = 87
     regressor_preds = np.where(
         regressor_preds > full_game_threshold, 90, regressor_preds
     )

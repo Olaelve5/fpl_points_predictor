@@ -22,7 +22,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     # If minutes training and not minutes classifier, filter to only players who played
     if minutes_training and not minutes_classifier:
-        processed_df = processed_df[processed_df["minutes_next"] >= 1].copy()
+        processed_df = processed_df[processed_df["minutes_next"] >= 5].copy()
 
     # Drop target columns
     processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
@@ -34,7 +34,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     # Set the target type based on training type
     if minutes_training:
         if minutes_classifier:
-            target = (processed_df["minutes_next"] > 1).astype(int)
+            target = (processed_df["minutes_next"] > 5).astype(int)
         else:
             target = processed_df["minutes_next"]
             print("--- Regressor Training Target Stats ---")

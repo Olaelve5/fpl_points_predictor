@@ -3,7 +3,7 @@ from sklearn.ensemble import (
     HistGradientBoostingRegressor,
     RandomForestRegressor,
 )
-from sklearn.linear_model import Lasso
+from sklearn.linear_model import RidgeCV
 from lightgbm import LGBMRegressor
 from models_operations.train import train_model
 from models_operations.test import compare_model_to_baseline
@@ -15,13 +15,15 @@ base_models = [
     (
         "lgbm_huber",
         LGBMRegressor(
+            objective="huber",
             n_estimators=500,
             learning_rate=0.01,
             num_leaves=50,
             random_state=42,
             n_jobs=-1,
             alpha=0.8,
-            reg_lambda=1.0,
+            reg_lambda=5.0,  # Increased from 1.0
+            reg_alpha=0.5,  # Add some L1 regularization
             colsample_bytree=0.8,
             subsample=0.8,
         ),
@@ -38,7 +40,8 @@ base_models = [
             objective="regression_l1",
             subsample=0.8,
             colsample_bytree=0.8,
-            reg_lambda=1.0,
+            reg_lambda=5.0,  # Increased from 1.0
+            reg_alpha=0.5,  # Add some L1 regularization
         ),
     ),
     (
@@ -54,7 +57,7 @@ base_models = [
     ),
 ]
 
-meta_learner = Lasso(alpha=0.001, random_state=42)
+meta_learner = RidgeCV(alphas=np.logspace(-3, 3, 7), cv=5)
 
 
 model = StackingRegressor(
