@@ -7,18 +7,6 @@ import seaborn as sns
 import lightgbm as lgb
 
 
-model = LGBMClassifier(
-    n_estimators=457,
-    learning_rate=0.01,
-    num_leaves=63,
-    random_state=42,
-    n_jobs=-1,
-    subsample=0.63,
-    max_depth=8,
-    colsample_bytree=0.66,
-)
-
-
 def plot_confusion_matrix(y_test, y_pred):
 
     cm = confusion_matrix(y_test, y_pred)
@@ -47,8 +35,6 @@ if __name__ == "__main__":
     training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)
     X_train, X_test, y_train, y_test = training_data
 
-    # --- THIS IS THE KEY CHANGE ---
-
     # 1. Calculate the ratio for scale_pos_weight
     neg_samples = y_train.value_counts()[0]
     pos_samples = y_train.value_counts()[1]
@@ -59,13 +45,18 @@ if __name__ == "__main__":
 
     # 2. Add the parameter to your model
     model = LGBMClassifier(
+        objective="binary",
+        metric="auc",
+        boosting_type="gbdt",
         n_estimators=2000,
         learning_rate=0.01,
         num_leaves=63,
         random_state=42,
+        reg_alpha=0.2,
+        reg_lambda=1.0,
         n_jobs=-1,
         subsample=0.63,
-        max_depth=8,
+        max_depth=12,
         colsample_bytree=0.66,
         scale_pos_weight=scale_pos_weight_value,  # <-- Add the new parameter here
     )

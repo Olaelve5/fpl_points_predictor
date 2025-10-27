@@ -2,9 +2,6 @@ from lightgbm import LGBMRegressor
 from models_operations.train import train_model
 import numpy as np
 from utils.get_training_test_data import get_train_test_data
-from utils.get_prediction_data import get_rows_to_predict
-from utils.load_csv_to_df import load_csv_to_df
-from models_operations.predict import make_predictions
 
 model = LGBMRegressor(
     n_estimators=1000,

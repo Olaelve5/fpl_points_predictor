@@ -22,10 +22,10 @@ base_models = [
             random_state=42,
             n_jobs=-1,
             alpha=0.8,
-            reg_lambda=5.0,  # Increased from 1.0
-            reg_alpha=0.5,  # Add some L1 regularization
             colsample_bytree=0.8,
             subsample=0.8,
+            reg_alpha=0.3,
+            reg_lambda=0.8,
         ),
     ),
     (
@@ -40,8 +40,8 @@ base_models = [
             objective="regression_l1",
             subsample=0.8,
             colsample_bytree=0.8,
-            reg_lambda=5.0,  # Increased from 1.0
-            reg_alpha=0.5,  # Add some L1 regularization
+            reg_lambda=1.0,
+            reg_alpha=0.3,
         ),
     ),
     (

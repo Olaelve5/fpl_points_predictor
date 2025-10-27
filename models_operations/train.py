@@ -1,5 +1,5 @@
 import joblib
-from models_operations.plot_model import plot_predictions
+from plotting.plot_predictions import plot_predictions
 import numpy as np
 
 

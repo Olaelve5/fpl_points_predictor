@@ -96,4 +96,9 @@ def add_rolling_average_minutes(df, window_size=3):
         .transform(lambda x: x.rolling(window=window_size, min_periods=1).mean())
         .round(1)
     )
+
+    df["minutes_consistency"] = df["rolling_avg_minutes"] / 90.0
+
+    df["value_x_consistency"] = df["value"] * df["minutes_consistency"]
+
     return df

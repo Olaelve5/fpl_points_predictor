@@ -10,35 +10,35 @@ def get_columns_to_drop(is_minutes_training=False):
         "modified",
         "season",
         # Stats from previous gameweek
-        "total_points",
-        "goals_scored",
-        "goals_conceded",
-        "saves",
-        "assists",
-        "own_goals",
-        "penalties_saved",
-        "penalties_missed",
-        "tackles",
-        "clearances_blocks_interceptions",
-        "defensive_contribution",
-        "yellow_cards",
-        "recoveries",
-        "threat",
-        "influence",
-        "bonus",
-        "starts",
-        "creativity",
-        "bps",
-        "clean_sheets",
+        # "total_points",
+        # "goals_scored",
+        # "goals_conceded",
+        # "saves",
+        # "assists",
+        # "own_goals",
+        # "penalties_saved",
+        # "penalties_missed",
+        # "tackles",
+        # "clearances_blocks_interceptions",
+        # "defensive_contribution",
+        # "yellow_cards",
+        # "recoveries",
+        # "threat",
+        # "influence",
+        # "bonus",
+        # "starts",
+        # "creativity",
+        # "bps",
+        # "clean_sheets",
         # Expected stats
         "xP",
-        "expected_goals",
-        "expected_assists",
-        "expected_goals_conceded",
-        "expected_goal_involvements",
+        # "expected_goals",
+        # "expected_assists",
+        # "expected_goals_conceded",
+        # "expected_goal_involvements",
         # transfers info
-        "selected",
-        "transfers_balance",
+        #"selected",
+        #"transfers_balance",
         "transfers_in",
         "transfers_out",
         # fixture info
@@ -52,40 +52,41 @@ def get_columns_to_drop(is_minutes_training=False):
         # Use round instead of GW
         "GW",
         # EWMA columns
-        "ewma_xA",
-        "ewma_xG",
-        "ewma_gc",
+        # "ewma_xA",
+        # "ewma_xG",
+        # "ewma_gc",
         # "ewma_bps",
-        "ewma_threat",
+        # "ewma_threat",
         # "ewma_cs",
-        "ewma_creativity",
+        # "ewma_creativity",
         # Available status
         "status_available",
         "status_unavailable",
     ]
 
-    if is_minutes_training:
-        columns_to_drop.extend(
-            [
-                # EWMA columns
-                "ewma_points",
-                "ewma_minutes",
-                "ewma_creativity",
-                "ewma_def_contr",
-                "ewma_xGI",
-                # Other columns
-                "creativity",
-                "ict_index",
-                "pos_FWD",
-                "pos_DEF",
-                "self_team_attack_rating",
-                "self_team_defence_rating",
-                "next_fixture_def_atk_ratio",
-                # Position dummies
-                "pos_GK",
-                "pos_MID",
-                "pos_FWD",
-                "pos_DEF",
-            ]
-        )
+    # if is_minutes_training:
+    #     columns_to_drop.extend(
+    #         [
+    #             # EWMA columns
+    #             # "ewma_points",
+    #             # "ewma_minutes",
+    #             # "ewma_creativity",
+    #             # "ewma_def_contr",
+    #             # "ewma_xGI",
+    #             # Other columns
+    #             "creativity",
+    #             "ict_index",
+    #             "pos_FWD",
+    #             "pos_DEF",
+    #             "self_team_attack_rating",
+    #             "self_team_defense_rating",
+    #             "next_fixture_def_atk_ratio",
+    #             "next_is_home",
+    #             # Position dummies
+    #             "pos_GK",
+    #             "pos_MID",
+    #             "pos_FWD",
+    #             "pos_DEF",
+    #         ]
+    #     )
     return columns_to_drop

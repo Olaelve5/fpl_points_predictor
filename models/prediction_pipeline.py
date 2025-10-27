@@ -111,11 +111,11 @@ def prediction_pipeline():
         by=["round", "predicted_points"], ascending=[True, False], inplace=True
     )
 
-    return final_df
+    return final_df, features_for_prediction, identifiers_df, points_model
 
 
 if __name__ == "__main__":
-    final_predictions_df = prediction_pipeline()
+    final_predictions_df, features_for_prediction, identifiers_df, points_model = prediction_pipeline()
     print(final_predictions_df.head())
 
     # save to csv
