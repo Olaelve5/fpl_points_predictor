@@ -86,6 +86,11 @@ def format_data(raw_player_data, player_id, id_name_map):
     if upcoming_fixtures:
         fixtures_df = pd.DataFrame(upcoming_fixtures)
 
+        if not history_df.empty:
+            played_rounds = set(history_df["round"])
+            # Filter out fixtures that have already been played
+            fixtures_df = fixtures_df[~fixtures_df["event"].isin(played_rounds)].copy()
+
         # Add opponent_team column based on is_home
         fixtures_df["opponent_team"] = np.where(
             fixtures_df["is_home"], fixtures_df["team_a"], fixtures_df["team_h"]

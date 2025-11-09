@@ -41,6 +41,11 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     columns_to_drop = get_columns_to_drop(is_minutes_model)
     rows_to_predict.drop(columns=columns_to_drop, inplace=True, errors="ignore")
 
+    position_cols = ["pos_DEF", "pos_FWD", "pos_GK", "pos_MID"]
+    for col in position_cols:
+        rows_to_predict[col] = rows_to_predict[col].fillna(False)
+        rows_to_predict[col] = rows_to_predict[col].astype(bool)
+
     return rows_to_predict
 
 
