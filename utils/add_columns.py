@@ -79,11 +79,6 @@ def add_columns(df, team_data_file_path=None):
     if "status" not in df.columns:
         df["status"] = np.where(df["minutes"] > 0, "available", "unavailable")
 
-    # One-hot encode status
-    status_dummies = pd.get_dummies(df["status"], prefix="status")
-    df = pd.concat([df, status_dummies], axis=1)
-    df.drop("status", axis=1, inplace=True)
-
     print(f"Shape after adding new columns: {df.shape}")
 
     return df
@@ -97,8 +92,7 @@ def add_rolling_average_minutes(df, window_size=3):
         .round(1)
     )
 
-    df["minutes_consistency"] = df["rolling_avg_minutes"] / 90.0
-
-    df["value_x_consistency"] = df["value"] * df["minutes_consistency"]
+    df["minutes_consistency"] = (df["rolling_avg_minutes"] / 90.0).round(2)
+    df["value_x_consistency"] = (df["value"] * df["minutes_consistency"]).round(2)
 
     return df
