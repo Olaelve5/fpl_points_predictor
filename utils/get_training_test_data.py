@@ -57,14 +57,6 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
         features, target, test_size=0.20, random_state=50
     )
 
-    # Handle skewed target
-    if not minutes_training:
-        y_train_log = np.log1p(y_train)
-        y_test_log = np.log1p(y_test)
-    else:
-        y_train_log = y_train
-        y_test_log = y_test
-
     # Save feature order for later use in predictions
     feature_order = X_train.columns.tolist()
     if minutes_training:
@@ -78,7 +70,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     y_train.to_csv("data/training_data/y_train.csv", index=False)
     y_test.to_csv("data/training_data/y_test.csv", index=False)
 
-    return X_train, X_test, y_train_log, y_test_log
+    return X_train, X_test, y_train, y_test
 
 
 def apply_feature_engineering(df):

@@ -5,8 +5,8 @@ import seaborn as sns
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import confusion_matrix, RocCurveDisplay
-from sklearn.calibration import calibration_curve  # <--- Added this
+from sklearn.metrics import confusion_matrix
+from sklearn.calibration import calibration_curve
 from utils.get_training_test_data import get_train_test_data
 
 # --- 1. CONFIGURATION ---
@@ -165,9 +165,7 @@ if __name__ == "__main__":
     print(f"Min prediction prob: {model_proba.min():.4f}")
 
     # F. Visualizations
-    plot_loss_curve(model)  # How good is the ranking?
-    plot_confusion_matrix(y_test, model_preds)  # Where are the errors?
-    plot_learning_curve(trained_model)  # Did we overfit?
-
-    # The most important plot for your "Two-Stage" logic:
-    plot_calibration_curve(y_test, model_proba)
+    plot_loss_curve(model)
+    plot_confusion_matrix(y_test, model_preds)  
+    plot_learning_curve(trained_model)  
+    plot_calibration_curve(y_test, model_proba) 
