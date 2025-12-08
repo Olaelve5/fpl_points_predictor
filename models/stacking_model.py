@@ -1,11 +1,9 @@
 from sklearn.ensemble import (
     StackingRegressor,
     HistGradientBoostingRegressor,
-    RandomForestRegressor,
 )
 from sklearn.linear_model import RidgeCV
 from lightgbm import LGBMRegressor
-from models_operations.train import train_model
 from models_operations.test import compare_model_to_baseline
 from utils.get_training_test_data import get_train_test_data
 import numpy as np
@@ -71,17 +69,11 @@ model = StackingRegressor(
 
 if __name__ == "__main__":
     training_data = get_train_test_data()
-    X_train, X_test, y_train_log, y_test_log = training_data
+    X_train, X_test, y_train, y_test = training_data
 
-    trained_model = train_model(
-        model,
-        training_data,
-        "data/saved_models/stacking_model.pkl",
-        plot=True,
-        with_sample_weights=True,
-    )
+    trained_model = model.fit(X_train, y_train)
 
-    model_preds = np.expm1(trained_model.predict(X_test))
-    compare_model_to_baseline(model_preds, np.expm1(y_test_log), X_test)
+    model_preds = trained_model.predict(X_test)
+    compare_model_to_baseline(model_preds, y_test, X_test)
 
     print("Training complete.")

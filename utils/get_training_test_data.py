@@ -1,9 +1,8 @@
-import numpy as np
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
 from utils.load_csv_to_df import load_csv_to_df
-from utils.get_columns_to_drop import get_columns_to_drop
+from utils.feature_processing import process_features
 from utils.add_columns import add_columns
 
 
@@ -18,39 +17,34 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
         )
         return None, None, None, None
 
-    processed_df = apply_feature_engineering(original_df)
+    full_df = add_team_features(original_df)
 
     # If minutes training and not minutes classifier, filter to only players who played
     if minutes_training and not minutes_classifier:
-        processed_df = processed_df[processed_df["minutes_next"] >= 5].copy()
+        full_df = full_df[full_df["minutes_next"] >= 5].copy()
+
+    full_df = process_features(full_df, is_training=True)
 
     # Drop target columns
-    processed_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
+    full_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
     if minutes_training:
-        features = processed_df.drop(columns=["target_score", "minutes_next"])
+        features = full_df.drop(columns=["target_score", "minutes_next"])
     else:
-        features = processed_df.drop(columns=["target_score"])
+        features = full_df.drop(columns=["target_score"])
 
     # Set the target type based on training type
     if minutes_training:
         if minutes_classifier:
-            target = (processed_df["minutes_next"] > 1).astype(int)
+            target = (full_df["minutes_next"] > 1).astype(int)
         else:
-            target = processed_df["minutes_next"]
+            target = full_df["minutes_next"]
             print("--- Regressor Training Target Stats ---")
             print(target.describe())
     else:
-        target = processed_df["target_score"]
+        target = full_df["target_score"]
 
     # Clip target in case of negative score
     target.clip(lower=0, inplace=True)
-
-    # Drop unwanted columns
-    columns_to_drop = get_columns_to_drop(minutes_training)
-    features.drop(columns=columns_to_drop, inplace=True, errors="ignore")
-
-    # Also drop name and team columns if they exist
-    features.drop(columns=["name", "team", "opponent_team"], errors="ignore", inplace=True)
 
     # Split the data into training and testing sets - 80% train, 20% test
     X_train, X_test, y_train, y_test = train_test_split(
@@ -73,7 +67,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     return X_train, X_test, y_train, y_test
 
 
-def apply_feature_engineering(df):
+def add_team_features(df):
     """Applies feature engineering in groups based on seasons."""
     base_team_file_path = (
         "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
@@ -86,10 +80,5 @@ def apply_feature_engineering(df):
         processed_seasons.append(processed_season_df)
 
     combined_df = pd.concat(processed_seasons, ignore_index=True)
-
-    # Remove players with position 'AM' (assistant managers)
-    combined_df["pos_AM"] = combined_df["pos_AM"].fillna(0)
-    combined_df = combined_df[combined_df["pos_AM"] == 0].copy()
-    combined_df.drop(columns=["pos_AM"], inplace=True, errors="ignore")
 
     return combined_df

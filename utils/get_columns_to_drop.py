@@ -1,4 +1,4 @@
-def get_columns_to_drop(is_minutes_training=False):
+def get_columns_to_drop():
     """Returns a list of columns to drop."""
 
     columns_to_drop = [
@@ -37,8 +37,8 @@ def get_columns_to_drop(is_minutes_training=False):
         # "expected_goals_conceded",
         # "expected_goal_involvements",
         # transfers info
-        #"selected",
-        #"transfers_balance",
+        # "selected",
+        # "transfers_balance",
         "transfers_in",
         "transfers_out",
         # fixture info
@@ -62,31 +62,6 @@ def get_columns_to_drop(is_minutes_training=False):
         # Available status
         "status_available",
         "status_unavailable",
+        "pos_AM",
     ]
-
-    # if is_minutes_training:
-    #     columns_to_drop.extend(
-    #         [
-    #             # EWMA columns
-    #             # "ewma_points",
-    #             # "ewma_minutes",
-    #             # "ewma_creativity",
-    #             # "ewma_def_contr",
-    #             # "ewma_xGI",
-    #             # Other columns
-    #             "creativity",
-    #             "ict_index",
-    #             "pos_FWD",
-    #             "pos_DEF",
-    #             "self_team_attack_rating",
-    #             "self_team_defense_rating",
-    #             "next_fixture_def_atk_ratio",
-    #             "next_is_home",
-    #             # Position dummies
-    #             "pos_GK",
-    #             "pos_MID",
-    #             "pos_FWD",
-    #             "pos_DEF",
-    #         ]
-    #     )
     return columns_to_drop

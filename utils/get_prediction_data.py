@@ -1,24 +1,26 @@
 import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
-from utils.get_columns_to_drop import get_columns_to_drop
+from utils.feature_processing import process_features
 from utils.add_columns import add_columns
 
 
-def get_rows_to_predict(last_completed_round, is_minutes_model=False, return_identifiers=False):
+def get_rows_to_predict(
+    last_completed_round, is_minutes_model=False, return_identifiers=False
+):
     """Function to process raw data for making predictions."""
 
     raw_df = load_csv_to_df(
         "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
     )
 
-    processed_df = add_columns(
+    full_df = add_columns(
         raw_df,
         "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
     )
 
     # Split the dataframe into current and future gws
-    current_gw_rows = processed_df[processed_df["round"] == last_completed_round]
-    future_gw_rows = processed_df[processed_df["round"] > last_completed_round]
+    current_gw_rows = full_df[full_df["round"] == last_completed_round]
+    future_gw_rows = full_df[full_df["round"] > last_completed_round]
 
     # Impute player data into future gameweeks
     rows_to_predict = impute_values_into_future_gws(current_gw_rows, future_gw_rows)
@@ -34,19 +36,7 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False, return_ide
     else:
         rows_to_predict.drop(columns=["target_score"], inplace=True, errors="ignore")
 
-    # Drop unwanted columns
-    columns_to_drop = get_columns_to_drop(is_minutes_model)
-    
-    if return_identifiers:
-        pass 
-    else:
-        # Standard training behavior
-        rows_to_predict.drop(columns=columns_to_drop, inplace=True, errors="ignore")
-
-    position_cols = ["pos_DEF", "pos_FWD", "pos_GK", "pos_MID"]
-    for col in position_cols:
-        rows_to_predict[col] = rows_to_predict[col].fillna(False)
-        rows_to_predict[col] = rows_to_predict[col].astype(bool)
+    rows_to_predict = process_features(rows_to_predict, is_training=False)
 
     return rows_to_predict
 
