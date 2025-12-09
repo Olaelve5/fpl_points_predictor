@@ -1,9 +1,9 @@
 from lightgbm import LGBMRegressor
-from models_operations.test import compare_model_to_baseline
 from utils.get_training_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
+import pandas as pd
 
 model_params = {
     "objective": "regression",
@@ -84,13 +84,14 @@ if __name__ == "__main__":
     trained_model = model.fit(X_train, y_train)
     print("Model trained.")
 
-    # 2. Evaluate
+    # save the model
+    pd.to_pickle(trained_model, "data/saved_models/boosting_model.pkl")
+
     model_preds = trained_model.predict(X_test)
-    compare_model_to_baseline(model_preds, y_test, X_test)
     print("Training complete.")
 
     # 3. Visualizations
     plot_feature_importance(trained_model)
     plot_actual_vs_predicted(y_test, model_preds)
     plot_distribution_overlay(y_test, model_preds)
-    
+
