@@ -16,7 +16,7 @@ def add_columns(df, team_data_file_path=None):
         "minutes": {"name": "ewma_minutes", "decimals": 1},
         "bps": {"name": "ewma_bps", "decimals": 1},
         "expected_goals": {"name": "ewma_xG", "decimals": 2},
-        "expected_goals_involvements": {"name": "ewma_xGI", "decimals": 2},
+        "expected_goal_involvements": {"name": "ewma_xGI", "decimals": 2},
         "expected_assists": {"name": "ewma_xA", "decimals": 2},
         "threat": {"name": "ewma_threat", "decimals": 1},
         "creativity": {"name": "ewma_creativity", "decimals": 1},

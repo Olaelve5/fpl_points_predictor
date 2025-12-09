@@ -39,8 +39,8 @@ def get_columns_to_drop():
         # transfers info
         # "selected",
         # "transfers_balance",
-        "transfers_in",
-        "transfers_out",
+        # "transfers_in",
+        # "transfers_out",
         # fixture info
         "team_a_score",
         "team_h_score",
