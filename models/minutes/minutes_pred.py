@@ -3,6 +3,8 @@ from utils.get_training_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
+import pandas as pd
+import joblib
 
 # --- CONFIGURATION ---
 
@@ -62,7 +64,7 @@ def plot_learning_curve(model):
         metric_key = "mae"
 
     train_err = results["training"][metric_key]
-    
+
     val_key = "valid_0" if "valid_0" in results else "valid_1"
     val_err = results[val_key][metric_key]
 
@@ -103,6 +105,9 @@ if __name__ == "__main__":
             lgb.log_evaluation(100),  # print progress every 100 trees
         ],
     )
+
+    # Save model
+    joblib.dump(trained_model, "data/saved_models/minutes/minutes_regression_model.pkl")
 
     model_preds = trained_model.predict(X_test)
 

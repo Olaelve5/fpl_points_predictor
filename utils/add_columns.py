@@ -70,10 +70,10 @@ def add_columns(df, team_data_file_path=None):
     ).round(2)
 
     # Add target score column
-    df["target_score"] = df.groupby("name")["total_points"].shift(-1)
+    df["target_score"] = df.groupby(["name", "team"])["total_points"].shift(-1)
 
     # Add target minutes column
-    df["minutes_next"] = df.groupby("name")["minutes"].shift(-1)
+    df["predicted_minutes"] = df.groupby(["name", "team"])["minutes"].shift(-1)
 
     # If status columns doesn't exist, create it and add data based on minutes
     if "status" not in df.columns:

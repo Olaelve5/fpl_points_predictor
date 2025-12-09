@@ -26,6 +26,7 @@ model_params = {
     "colsample_bytree": 0.66,
 }
 
+
 # --- 2. PLOTTING FUNCTIONS ---
 
 
@@ -63,16 +64,16 @@ def plot_confusion_matrix(y_test, y_pred):
 def plot_loss_curve(model):
     results = model.evals_result_
     # Note: LGBM calls it 'binary_logloss' in the results dict
-    train_loss = results['training']['binary_logloss']
-    val_loss = results['valid_1']['binary_logloss']
+    train_loss = results["training"]["binary_logloss"]
+    val_loss = results["valid_1"]["binary_logloss"]
     epochs = range(len(train_loss))
 
     plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss, label='Training LogLoss')
-    plt.plot(epochs, val_loss, label='Validation LogLoss')
-    plt.title('LogLoss Curve')
-    plt.xlabel('Trees')
-    plt.ylabel('LogLoss (Lower is Better)')
+    plt.plot(epochs, train_loss, label="Training LogLoss")
+    plt.plot(epochs, val_loss, label="Validation LogLoss")
+    plt.title("LogLoss Curve")
+    plt.xlabel("Trees")
+    plt.ylabel("LogLoss (Lower is Better)")
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -96,6 +97,7 @@ def plot_learning_curve(model):
 
 
 # --- 3. VALIDATION LOGIC ---
+
 
 def run_cross_validation(X, y, params, n_splits=5):
     """
@@ -132,40 +134,38 @@ def run_cross_validation(X, y, params, n_splits=5):
 # --- 4. MAIN EXECUTION ---
 
 if __name__ == "__main__":
-    # A. Load Data
+    # Load Data
     training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)
     X_train, X_test, y_train, y_test = training_data
 
-    # B. Run Health Check (Cross Validation)
-    # We use X_train and y_train here to check how stable the model is
+    # Cross validation
     run_cross_validation(X_train, y_train, model_params)
 
-    # C. Train Final Model
-    # Now we train for real, to create the file we will save
+    # Train model
     print("Training Final Model...")
     model = LGBMClassifier(**model_params)
     trained_model = model.fit(
         X_train,
         y_train,
-        # We pass X_train (as 'training') and X_test (as 'valid_1')
         eval_set=[(X_train, y_train), (X_test, y_test)],
         eval_metric="auc",
         callbacks=[lgb.early_stopping(100, verbose=True)],
     )
 
-    # D. Save Model
-    pd.to_pickle(trained_model, "data/saved_models/minutes_classifier_model.pkl")
+    # Save model
+    pd.to_pickle(
+        trained_model, "data/saved_models/minutes/minutes_classifier_model.pkl"
+    )
 
-    # E. Evaluate
-    # Get predictions (0 or 1) and Probabilities (0.0 to 1.0)
+    # Evaluate
     model_preds = trained_model.predict(X_test)
     model_proba = trained_model.predict_proba(X_test)[:, 1]
 
     print(f"Max prediction prob: {model_proba.max():.4f}")
     print(f"Min prediction prob: {model_proba.min():.4f}")
 
-    # F. Visualizations
+    # Visualizations
     plot_loss_curve(model)
-    plot_confusion_matrix(y_test, model_preds)  
-    plot_learning_curve(trained_model)  
-    plot_calibration_curve(y_test, model_proba) 
+    plot_confusion_matrix(y_test, model_preds)
+    plot_learning_curve(trained_model)
+    plot_calibration_curve(y_test, model_proba)

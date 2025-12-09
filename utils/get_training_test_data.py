@@ -21,23 +21,23 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     # If minutes training and not minutes classifier, filter to only players who played
     if minutes_training and not minutes_classifier:
-        full_df = full_df[full_df["minutes_next"] >= 5].copy()
+        full_df = full_df[full_df["predicted_minutes"] >= 5].copy()
 
     full_df = process_features(full_df, is_training=True)
 
     # Drop target columns
-    full_df.dropna(subset=["target_score", "minutes_next"], inplace=True)
+    full_df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
     if minutes_training:
-        features = full_df.drop(columns=["target_score", "minutes_next"])
+        features = full_df.drop(columns=["target_score", "predicted_minutes"])
     else:
         features = full_df.drop(columns=["target_score"])
 
     # Set the target type based on training type
     if minutes_training:
         if minutes_classifier:
-            target = (full_df["minutes_next"] > 1).astype(int)
+            target = (full_df["predicted_minutes"] > 1).astype(int)
         else:
-            target = full_df["minutes_next"]
+            target = full_df["predicted_minutes"]
             print("--- Regressor Training Target Stats ---")
             print(target.describe())
     else:
@@ -54,15 +54,9 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     # Save feature order for later use in predictions
     feature_order = X_train.columns.tolist()
     if minutes_training:
-        joblib.dump(feature_order, "data/saved_models/minutes_feature_order.pkl")
+        joblib.dump(feature_order, "data/feature_order/minutes_feature_order.pkl")
     else:
-        joblib.dump(feature_order, "data/saved_models/feature_order.pkl")
-
-    # Save data for inspection
-    X_train.to_csv("data/training_data/X_train.csv", index=False)
-    X_test.to_csv("data/training_data/X_test.csv", index=False)
-    y_train.to_csv("data/training_data/y_train.csv", index=False)
-    y_test.to_csv("data/training_data/y_test.csv", index=False)
+        joblib.dump(feature_order, "data/feature_order/points_feature_order.pkl")
 
     return X_train, X_test, y_train, y_test
 

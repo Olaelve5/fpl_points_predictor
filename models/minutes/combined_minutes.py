@@ -9,13 +9,14 @@ from utils.get_prediction_data import get_rows_to_predict
 def load_models():
     """Loads models and the feature list used during training."""
     try:
-        classifier = pd.read_pickle("data/saved_models/minutes_classifier_model.pkl")
-        regressor = joblib.load("data/saved_models/minutes_pred_model.pkl")
-        feature_order = joblib.load("data/saved_models/minutes_feature_order.pkl")
+        classifier = pd.read_pickle("data/saved_models/minutes/minutes_classifier_model.pkl")
+        regressor = joblib.load("data/saved_models/minutes/minutes_regression_model.pkl")
+        feature_order = joblib.load("data/feature_order/minutes_feature_order.pkl")
         return classifier, regressor, feature_order
     except FileNotFoundError as e:
         print(f"Error loading models: {e}")
         exit()
+
 
 def handle_goalkeeper_minutes(df):
     """
@@ -35,7 +36,7 @@ def handle_goalkeeper_minutes(df):
         df[eligible_gks_mask].groupby(["team", "round"])["prob_play"].idxmax()
     )
 
-    # D. Set those specific 'Number 1' keepers to 90 minutes
+    # Set those specific 'Number 1' keepers to 90 minutes
     df.loc[best_gk_indices.values, "predicted_minutes"] = 90
 
     # --- Verification Prints ---
@@ -53,6 +54,7 @@ def minutes_prediction_pipeline():
     """
     Main pipeline to predict player minutes using a two-stage model.
     Returns two DataFrames - one with all features and one with only identifier features.
+    Also returns the feature order used.
     """
     last_round = get_last_completed_round()
     print(f"--- Predicting for GW{last_round + 1} ---")
@@ -69,6 +71,9 @@ def minutes_prediction_pipeline():
             "value",
             "round",
             "pos_GK",
+            "pos_DEF",
+            "pos_MID",
+            "pos_FWD",
             "status",
         ]
     ].copy()
@@ -98,7 +103,13 @@ def minutes_prediction_pipeline():
     # Handle goalkeeper minutes
     results = handle_goalkeeper_minutes(results)
 
-    X["predicted_minutes"] = results["predicted_minutes"]
+    # Add back identifiers to the full dataframe.
+    # This dataframe will be used to make final predictions in
+    # the main pipeline
+    cols_to_add = [col for col in identifiers.columns if col not in X.columns] + [
+        "predicted_minutes"
+    ]
+    X = pd.concat([X, results[cols_to_add]], axis=1)
 
     return results, X
 

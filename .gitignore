@@ -38,6 +38,9 @@ ENV/
 # Model files
 saved_models/
 saved_plots/
+feature_orders/
+prediction_data/
+training_data/
 
 # IDE
 .vscode/
