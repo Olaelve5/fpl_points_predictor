@@ -85,7 +85,7 @@ if __name__ == "__main__":
     print("Model trained.")
 
     # save the model
-    pd.to_pickle(trained_model, "data/saved_models/boosting_model.pkl")
+    pd.to_pickle(trained_model, "data/saved_models/points/boosting_model.pkl")
 
     model_preds = trained_model.predict(X_test)
     print("Training complete.")

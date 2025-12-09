@@ -2,11 +2,10 @@ import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
 from utils.feature_processing import process_features
 from utils.add_columns import add_columns
+from utils.add_columns import add_fixture_difficulty_rating
 
 
-def get_rows_to_predict(
-    last_completed_round, is_minutes_model=False, return_identifiers=False
-):
+def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     """Function to process raw data for making predictions."""
 
     raw_df = load_csv_to_df(
@@ -18,17 +17,38 @@ def get_rows_to_predict(
         "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
     )
 
-    # Split the dataframe into current and future gws
+    # Split the dataframe
     current_gw_rows = full_df[full_df["round"] == last_completed_round]
     future_gw_rows = full_df[full_df["round"] > last_completed_round]
 
-    # Impute player data into future gameweeks
+    # Impute player data
     rows_to_predict = impute_values_into_future_gws(current_gw_rows, future_gw_rows)
 
-    # Drop rows with NaN in next_fixture_attack_rating
+    # Recalculate fixture difficulty ratings based on opponent_team
+    # - which is the next fixture for prediction rows
+    rows_to_predict["next_fixture"] = rows_to_predict["opponent_team"]
+    rows_to_predict["next_is_home"] = rows_to_predict["was_home"]
+
+    rows_to_predict = add_fixture_difficulty_rating(
+        rows_to_predict,
+        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
+    )
+
+    # Recalculate ratios
+    rows_to_predict["next_fixture_atk_def_ratio"] = (
+        rows_to_predict["self_team_attack_rating"]
+        / rows_to_predict["next_fixture_defense_rating"]
+    ).round(2)
+
+    rows_to_predict["next_fixture_def_atk_ratio"] = (
+        rows_to_predict["self_team_defense_rating"]
+        / rows_to_predict["next_fixture_attack_rating"]
+    ).round(2)
+
+    # Drop rows with NaN
     rows_to_predict = rows_to_predict.dropna(subset=["next_fixture_attack_rating"])
 
-    # Drop target columns if they exist
+    # Drop target columns
     if is_minutes_model:
         rows_to_predict.drop(
             columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
@@ -47,11 +67,8 @@ def impute_values_into_future_gws(current_gw_rows, future_gw_rows):
         "opponent_team",
         "was_home",
         "kickoff_time",
-        "next_fixture_attack_rating",
-        "next_fixture_defense_rating",
-        "next_fixture_atk_def_ratio",
-        "next_fixture_def_atk_ratio",
     ]
+
     player_key = ["name", "team"]
 
     player_snapshot_cols = [
@@ -59,7 +76,6 @@ def impute_values_into_future_gws(current_gw_rows, future_gw_rows):
     ]
 
     player_snapshot = current_gw_rows[player_snapshot_cols]
-
     future_fixtures = future_gw_rows[player_key + fixture_specific_cols]
 
     rows_to_predict = pd.merge(

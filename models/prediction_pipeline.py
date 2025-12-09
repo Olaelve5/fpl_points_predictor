@@ -15,7 +15,7 @@ def prediction_pipeline():
     Orchestrates the full two-stage prediction pipeline:
     1. Predicts minutes.
     2. Uses those predictions as a feature to predict points.
-    It also fetches updated data if the local data is outdated. 
+    It also fetches updated data if the local data is outdated.
     """
 
     last_completed_round_api = get_last_completed_round()
@@ -27,45 +27,36 @@ def prediction_pipeline():
 
     _, df_with_mins = minutes_prediction_pipeline()
 
+    # Load and use points feature order
+    points_feature_order = joblib.load("data/feature_order/points_feature_order.pkl")
+    rows_to_predict = df_with_mins[points_feature_order]
 
+    # Load points prediction model and make predictions
+    points_model = joblib.load("data/saved_models/points/boosting_model.pkl")
+    points_predictions = points_model.predict(rows_to_predict).round(1)
 
-    
+    final_df = df_with_mins.copy()
+    final_df["predicted_points"] = points_predictions
 
-    
-    
-    
+    # Map opponent_team IDs to names
+    final_df["opponent_team"] = final_df["opponent_team"].map(team_id_name_map())
 
-    
-    # # Map opponent_team IDs to names
-    # final_df["opponent_team"] = final_df["opponent_team"].map(team_id_name_map())
+    # Increment round by 1 to reflect the upcoming round
+    final_df["round"] = final_df["round"] + 1
 
-    # # Increment round by 1 to reflect the upcoming round
-    # final_df["round"] = final_df["round"] + 1
+    # Rename opponent_team column for clarity
+    final_df.rename(columns={"opponent_team": "next_opponent"}, inplace=True)
 
-    # # For each player, shift opponent_team to the next round's opponent
-    # final_df["opponent_team"] = final_df.groupby("name")["opponent_team"].shift(-1)
+    # Divide value by 10 to convert to standard FPL format
+    final_df["value"] = final_df["value"] / 10.0
 
-    # # Rename opponent_team column for clarity
-    # final_df.rename(columns={"opponent_team": "next_opponent"}, inplace=True)
-
-    # # Divide value by 10 to convert to standard FPL format
-    # final_df["value"] = final_df["value"] / 10.0
-
-    # # Rename predicted_minutes column for clarity
-    # final_df.rename(columns={"minutes_next": "predicted_minutes"}, inplace=True)
-
-    # final_df.sort_values(
-    #     by=["round", "predicted_points"], ascending=[True, False], inplace=True
-    # )
-
-    # return final_df, features_for_prediction, identifiers_df, points_model
-
-
-if __name__ == "__main__":
-    final_predictions_df, features_for_prediction, identifiers_df, points_model = prediction_pipeline()
-    print(final_predictions_df.head())
-
-    # save to csv
-    final_predictions_df.to_csv(
-        "data/prediction_data/predicted_points_with_minutes.csv", index=False
+    final_df.sort_values(
+        by=["round", "predicted_points"], ascending=[True, False], inplace=True
     )
+
+    final_df.to_csv("data/prediction_data/final_predictions.csv", index=False)
+
+    return final_df
+
+
+prediction_pipeline()

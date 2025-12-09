@@ -9,8 +9,12 @@ from utils.get_prediction_data import get_rows_to_predict
 def load_models():
     """Loads models and the feature list used during training."""
     try:
-        classifier = pd.read_pickle("data/saved_models/minutes/minutes_classifier_model.pkl")
-        regressor = joblib.load("data/saved_models/minutes/minutes_regression_model.pkl")
+        classifier = pd.read_pickle(
+            "data/saved_models/minutes/minutes_classifier_model.pkl"
+        )
+        regressor = joblib.load(
+            "data/saved_models/minutes/minutes_regression_model.pkl"
+        )
         feature_order = joblib.load("data/feature_order/minutes_feature_order.pkl")
         return classifier, regressor, feature_order
     except FileNotFoundError as e:
@@ -39,14 +43,6 @@ def handle_goalkeeper_minutes(df):
     # Set those specific 'Number 1' keepers to 90 minutes
     df.loc[best_gk_indices.values, "predicted_minutes"] = 90
 
-    # --- Verification Prints ---
-    print("\n--- Goalkeeper Selection Check ---")
-    playing_gks = df[(df["pos_GK"] == 1) & (df["predicted_minutes"] > 0)]
-
-    # Check counts per round (should be 20 per round)
-    print("Playing GKs per round:")
-    print(playing_gks.groupby("round")["name"].count())
-
     return df
 
 
@@ -59,9 +55,7 @@ def minutes_prediction_pipeline():
     last_round = get_last_completed_round()
     print(f"--- Predicting for GW{last_round + 1} ---")
 
-    rows_to_predict = get_rows_to_predict(
-        last_round, is_minutes_model=True, return_identifiers=True
-    )
+    rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
     classifier, regressor, feature_order = load_models()
 
     identifiers = rows_to_predict[
@@ -75,6 +69,7 @@ def minutes_prediction_pipeline():
             "pos_MID",
             "pos_FWD",
             "status",
+            "opponent_team",
         ]
     ].copy()
 
@@ -111,17 +106,16 @@ def minutes_prediction_pipeline():
     ]
     X = pd.concat([X, results[cols_to_add]], axis=1)
 
-    return results, X
-
-
-if __name__ == "__main__":
-    predictions, df_with_predictions = minutes_prediction_pipeline()
-
     # 8. Save
-    predictions.sort_values(
+    results.sort_values(
         by=["round", "predicted_minutes", "name"], ascending=[True, False, True]
     ).to_csv("data/prediction_data/combined_minutes_predictions.csv", index=False)
 
-    df_with_predictions.sort_values(
-        by=["round", "predicted_minutes"], ascending=[True, False]
-    ).to_csv("data/prediction_data/df_with_minutes_pred.csv", index=False)
+    X.sort_values(by=["round", "predicted_minutes"], ascending=[True, False]).to_csv(
+        "data/prediction_data/df_with_minutes_pred.csv", index=False
+    )
+
+    return results, X
+
+
+minutes_prediction_pipeline()
