@@ -9,7 +9,7 @@ from utils.get_prediction_data import get_rows_to_predict
 def load_models():
     """Loads models and the feature list used during training."""
     try:
-        classifier = pd.read_pickle(
+        classifier = joblib.load(
             "data/saved_models/minutes/minutes_classifier_model.pkl"
         )
         regressor = joblib.load(

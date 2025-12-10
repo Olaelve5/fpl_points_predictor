@@ -30,7 +30,7 @@ def prediction_pipeline():
     rows_to_predict = df_with_mins[points_feature_order]
 
     # Load points prediction model and make predictions
-    points_model = joblib.load("data/saved_models/points/boosting_model.pkl")
+    points_model = joblib.load("data/saved_models/points/forest_model.pkl")
     points_predictions = points_model.predict(rows_to_predict).round(1)
 
     final_df = df_with_mins.copy()

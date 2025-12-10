@@ -1,20 +1,21 @@
-from sklearn.ensemble import RandomForestRegressor
 from utils.get_training_test_data import get_train_test_data
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+import xgboost as xgb
 
 model_params = {
-    "criterion": "absolute_error",
-    "n_estimators": 400,
-    "max_depth": 12,
-    "min_samples_split": 5,
-    "min_samples_leaf": 5,
-    "random_state": 42,
+    "n_estimators": 1000,
+    "max_depth": 10,
+    "subsample": 0.8,
+    "reg_lambda": 1,
+    "min_child_weight": 10,
+    "objective": "reg:squarederror",
     "n_jobs": -1,
+    "random_state": 42,
 }
 
-model = RandomForestRegressor(**model_params)
+model = xgb.XGBRFRegressor(**model_params)
 
 training_data = get_train_test_data(minutes_training=False)
 X_train, X_test, y_train, y_test, _ = training_data
@@ -23,7 +24,6 @@ model.fit(X_train, y_train)
 
 # Save model
 joblib.dump(model, "data/saved_models/points/forest_model.pkl")
-
 
 def plot_actual_vs_predicted(y_true, y_pred):
     """
