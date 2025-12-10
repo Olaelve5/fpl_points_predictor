@@ -1,6 +1,5 @@
 import pandas as pd
 import joblib
-from sklearn.model_selection import train_test_split
 from utils.load_csv_to_df import load_csv_to_df
 from utils.feature_processing import process_features
 from utils.add_columns import add_columns
@@ -10,55 +9,71 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     """Function to return processed training and test data."""
 
     try:
+        # Load the Master CSV
         original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
     except FileNotFoundError:
-        print(
-            "Error: CSV file not found. Please ensure the file exists at the specified path."
-        )
-        return None, None, None, None
+        print("Error: CSV file not found.")
+        return None, None, None, None, None
 
     full_df = add_team_features(original_df)
 
-    # If minutes training and not minutes classifier, filter to only players who played
+    # Filter for minutes training if needed
     if minutes_training and not minutes_classifier:
         full_df = full_df[full_df["predicted_minutes"] >= 5].copy()
 
+    # We save these columns now because process_features drops them
+    meta_cols = ["name", "team", "position", "season", "round", "total_points"]
+    existing_meta_cols = [c for c in meta_cols if c in full_df.columns]
+    metadata = full_df[existing_meta_cols].copy()
+
     full_df = process_features(full_df, is_training=True)
 
-    # Drop target columns
+    # Drop rows where targets are NaN
     full_df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
+
+    # Use the index to ensure we drop the exact same rows
+    metadata = metadata.loc[full_df.index]
+
+    # Define features and target
     if minutes_training:
         features = full_df.drop(columns=["target_score", "predicted_minutes"])
-    else:
-        features = full_df.drop(columns=["target_score"])
-
-    # Set the target type based on training type
-    if minutes_training:
         if minutes_classifier:
             target = (full_df["predicted_minutes"] > 1).astype(int)
         else:
             target = full_df["predicted_minutes"]
-            print("--- Regressor Training Target Stats ---")
-            print(target.describe())
     else:
+        features = full_df.drop(columns=["target_score"])
         target = full_df["target_score"]
 
-    # Clip target in case of negative score
     target.clip(lower=0, inplace=True)
 
-    # Split the data into training and testing sets - 80% train, 20% test
-    X_train, X_test, y_train, y_test = train_test_split(
-        features, target, test_size=0.20, random_state=50
-    )
+    # Use metadata to split train/test based on season
+    # The latest season "25_26" is the test set
+    train_mask = metadata["season"] != "25_26"
+    test_mask = metadata["season"] == "25_26"
 
-    # Save feature order for later use in predictions
+    X_train = features.loc[train_mask]
+    y_train = target.loc[train_mask]
+    X_test = features.loc[test_mask]
+    y_test = target.loc[test_mask]
+
+    # Get metadata specifically for the test set (for evaluation later)
+    test_meta = metadata.loc[test_mask]
+
+    # Save feature order for later use in prediction
     feature_order = X_train.columns.tolist()
     if minutes_training:
         joblib.dump(feature_order, "data/feature_order/minutes_feature_order.pkl")
     else:
         joblib.dump(feature_order, "data/feature_order/points_feature_order.pkl")
 
-    return X_train, X_test, y_train, y_test
+    # Save training sets for inspection
+    X_train.to_csv("data/training_data/X_train.csv", index=False)
+    y_train.to_csv("data/training_data/y_train.csv", index=False)
+    X_test.to_csv("data/training_data/X_test.csv", index=False)
+    y_test.to_csv("data/training_data/y_test.csv", index=False)
+
+    return X_train, X_test, y_train, y_test, test_meta
 
 
 def add_team_features(df):

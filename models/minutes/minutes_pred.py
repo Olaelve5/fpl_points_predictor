@@ -93,7 +93,7 @@ def plot_importance(model):
 if __name__ == "__main__":
     training_data = get_train_test_data(minutes_training=True)
 
-    X_train, X_test, y_train, y_test = training_data
+    X_train, X_test, y_train, y_test, _ = training_data
 
     trained_model = model.fit(
         X_train,

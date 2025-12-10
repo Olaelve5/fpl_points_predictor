@@ -38,7 +38,7 @@ ENV/
 # Model files
 saved_models/
 saved_plots/
-feature_orders/
+feature_order/
 prediction_data/
 training_data/
 

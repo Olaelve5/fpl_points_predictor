@@ -1,6 +1,7 @@
 import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
 from fpl_api.fetch_updated_player_data import fetch_all_players_data
+import numpy as np
 
 player_data_base_path = (
     "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_"
@@ -41,8 +42,7 @@ def combine_csv(pull_latest_data=False):
     final_columns = sorted(list(all_columns))  # Use a sorted list for consistent order
 
     for processed_df in all_processed_dfs:
-        # Reindex the DataFrame to include all columns, filling missing ones with 0
-        harmonized_df = processed_df.reindex(columns=final_columns, fill_value=0)
+        harmonized_df = processed_df.reindex(columns=final_columns, fill_value=np.nan)
         final_list_of_dfs.append(harmonized_df)
 
     combined_df = pd.concat(final_list_of_dfs, ignore_index=True)
@@ -63,4 +63,4 @@ def combine_csv(pull_latest_data=False):
 
 
 if __name__ == "__main__":
-    combine_csv(pull_latest_data=False)
+    combine_csv(pull_latest_data=True)

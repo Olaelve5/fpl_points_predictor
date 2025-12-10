@@ -17,7 +17,7 @@ model_params = {
 model = RandomForestRegressor(**model_params)
 
 training_data = get_train_test_data(minutes_training=False)
-X_train, X_test, y_train, y_test = training_data
+X_train, X_test, y_train, y_test, _ = training_data
 
 model.fit(X_train, y_train)
 

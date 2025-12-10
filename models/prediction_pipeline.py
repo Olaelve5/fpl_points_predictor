@@ -4,9 +4,7 @@ from utils.get_last_completed_round import (
 )
 from fpl_api.fetch_updated_player_data import fetch_all_players_data
 from models.minutes.combined_minutes import minutes_prediction_pipeline
-import pandas as pd
 import joblib
-import numpy as np
 from utils.team_id_name_map import team_id_name_map
 
 
@@ -32,7 +30,7 @@ def prediction_pipeline():
     rows_to_predict = df_with_mins[points_feature_order]
 
     # Load points prediction model and make predictions
-    points_model = joblib.load("data/saved_models/points/forest_model.pkl")
+    points_model = joblib.load("data/saved_models/points/boosting_model.pkl")
     points_predictions = points_model.predict(rows_to_predict).round(1)
 
     final_df = df_with_mins.copy()
@@ -40,9 +38,6 @@ def prediction_pipeline():
 
     # Map opponent_team IDs to names
     final_df["opponent_team"] = final_df["opponent_team"].map(team_id_name_map())
-
-    # Increment round by 1 to reflect the upcoming round
-    final_df["round"] = final_df["round"] + 1
 
     # Rename opponent_team column for clarity
     final_df.rename(columns={"opponent_team": "next_opponent"}, inplace=True)

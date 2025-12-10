@@ -136,7 +136,7 @@ def run_cross_validation(X, y, params, n_splits=5):
 if __name__ == "__main__":
     # Load Data
     training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)
-    X_train, X_test, y_train, y_test = training_data
+    X_train, X_test, y_train, y_test, _ = training_data
 
     # Cross validation
     run_cross_validation(X_train, y_train, model_params)

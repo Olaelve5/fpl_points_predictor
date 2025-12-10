@@ -79,7 +79,7 @@ def plot_distribution_overlay(y_true, y_pred):
 if __name__ == "__main__":
     # 1. Train the model
     training_data = get_train_test_data()
-    X_train, X_test, y_train, y_test = training_data
+    X_train, X_test, y_train, y_test, _ = training_data
 
     trained_model = model.fit(X_train, y_train)
     print("Model trained.")
