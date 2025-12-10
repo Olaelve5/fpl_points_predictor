@@ -1,4 +1,4 @@
-from utils.get_columns_to_drop import get_columns_to_drop
+from utils.processing.get_columns_to_drop import get_columns_to_drop
 
 
 def process_features(df, is_training=False):

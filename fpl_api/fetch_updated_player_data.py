@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import concurrent.futures
 from tqdm import tqdm
-from utils.team_id_name_map import team_id_name_map
+from utils.processing.team_id_name_map import team_id_name_map
 
 
 def get_player_details():
@@ -29,7 +29,7 @@ def get_player_details():
 
         id_name_map = {
             player["id"]: {
-                "name": player["web_name"],
+                "name": player["first_name"] + " " + player["second_name"],
                 "position": position_map.get(player["element_type"], "Unknown"),
                 "team_id": player["team"],
                 "status": player["status"],

@@ -87,13 +87,13 @@ if __name__ == "__main__":
 
     # Run for Bruno
     plot_shap_explanation(
-        player_name="B.Fernandes",
+        player_name="Bruno Borges Fernandes",
         df_path=DATA_PATH,
         model_path=MODEL_PATH,
         feature_order_path=FEATURES_PATH,
     )
     plot_shap_explanation(
-        player_name="Cunha",
+        player_name="Matheus Santos Carneiro da Cunha",
         df_path=DATA_PATH,
         model_path=MODEL_PATH,
         feature_order_path=FEATURES_PATH,

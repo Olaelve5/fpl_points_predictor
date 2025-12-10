@@ -1,11 +1,11 @@
-from utils.get_last_completed_round import (
+from utils.processing.get_last_completed_round import (
     get_last_completed_round,
     get_last_completed_round_local,
 )
 from fpl_api.fetch_updated_player_data import fetch_all_players_data
 from models.minutes.combined_minutes import minutes_prediction_pipeline
 import joblib
-from utils.team_id_name_map import team_id_name_map
+from utils.processing.team_id_name_map import team_id_name_map
 
 
 def prediction_pipeline():

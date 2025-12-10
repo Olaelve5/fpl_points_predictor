@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from utils.team_id_name_map import team_id_name_map
+from utils.processing.team_id_name_map import team_id_name_map
 
 
 def add_fixture_difficulty_rating(df, teams_file_path):

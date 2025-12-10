@@ -7,7 +7,7 @@ from lightgbm import LGBMClassifier
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import confusion_matrix
 from sklearn.calibration import calibration_curve
-from utils.get_training_test_data import get_train_test_data
+from utils.processing.get_training_test_data import get_train_test_data
 
 # --- 1. CONFIGURATION ---
 model_params = {

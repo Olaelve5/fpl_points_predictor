@@ -6,7 +6,7 @@ from utils.fixture_difficulty import (
 )
 
 
-def add_columns(df, team_data_file_path=None):
+def add_columns(df, team_data_file_path=None, history_map=None, pos_avg_map=None):
     # EWMA configuration
     span_size = 4
 
@@ -40,6 +40,17 @@ def add_columns(df, team_data_file_path=None):
         else:
             # If the source column doesn't exist, create the EWMA column with NaN values
             df[config["name"]] = np.nan
+
+    if history_map is not None and pos_avg_map is not None:
+        history_data = df.apply(
+            lambda row: get_history(row, history_map, pos_avg_map),
+            axis=1,
+            result_type="expand",
+        )
+        df[["last_season_ppm", "last_season_minutes"]] = history_data
+    else:
+        df["last_season_ppm"] = 0
+        df["last_season_minutes"] = 0
 
     # One-hot encode positions
     position_dummies = pd.get_dummies(df["position"], prefix="pos")
@@ -96,3 +107,27 @@ def add_rolling_average_minutes(df, window_size=3):
     df["value_x_consistency"] = (df["value"] * df["minutes_consistency"]).round(2)
 
     return df
+
+
+def add_penalty_taker_flag(df):
+    """Function to add a penalty taker flag based on if a player has taken 2+ penalties in the season."""
+    pass
+
+
+def add_historic_points_per_game(df):
+    """Function to add historic points per game metric."""
+    pass
+
+
+def get_history(row, history_map, pos_avg_map):
+    key = (row["name"], row["season"])
+
+    # Try to find specific player history
+    if key in history_map:
+        return history_map[key]["history_pps"], history_map[key]["history_mpg"]
+
+    # If we have no history (First season in data OR new signing),
+    if row["position"] in pos_avg_map:
+        return pos_avg_map[row["position"]], 70
+
+    return 0, 70

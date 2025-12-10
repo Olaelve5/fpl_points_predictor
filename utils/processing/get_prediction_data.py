@@ -1,20 +1,24 @@
 import pandas as pd
 from utils.load_csv_to_df import load_csv_to_df
-from utils.feature_processing import process_features
-from utils.add_columns import add_columns
-from utils.add_columns import add_fixture_difficulty_rating
+from utils.processing.feature_processing import process_features
+from utils.processing.add_columns import add_columns
+from utils.processing.add_columns import add_fixture_difficulty_rating
+from utils.processing.get_training_test_data import get_historic_stats_map
 
 
 def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     """Function to process raw data for making predictions."""
 
-    raw_df = load_csv_to_df(
-        "/Users/ola/Documents/FPL_Price_Predictor/data/players_data/merged_gw_25_26.csv"
-    )
+    raw_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
+    historic_points_map, positional_avg_map = get_historic_stats_map(raw_df)
+
+    this_season = raw_df[raw_df["season"] == "25_26"].copy()
 
     full_df = add_columns(
-        raw_df,
-        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
+        this_season,
+        "data/team_data/teams_25_26.csv",
+        historic_points_map,
+        positional_avg_map,
     )
 
     # Split the dataframe

@@ -1,8 +1,8 @@
 import pandas as pd
 import joblib
 from utils.load_csv_to_df import load_csv_to_df
-from utils.feature_processing import process_features
-from utils.add_columns import add_columns
+from utils.processing.feature_processing import process_features
+from utils.processing.add_columns import add_columns
 
 
 def get_train_test_data(minutes_training=False, minutes_classifier=False):
@@ -15,7 +15,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
         print("Error: CSV file not found.")
         return None, None, None, None, None
 
-    full_df = add_team_features(original_df)
+    full_df = do_feature_engineering(original_df)
 
     # Filter for minutes training if needed
     if minutes_training and not minutes_classifier:
@@ -76,8 +76,11 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     return X_train, X_test, y_train, y_test, test_meta
 
 
-def add_team_features(df):
+def do_feature_engineering(df):
     """Applies feature engineering in groups based on seasons."""
+
+    history_map, pos_avg_map = get_historic_stats_map(df)
+
     base_team_file_path = (
         "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
     )
@@ -85,9 +88,63 @@ def add_team_features(df):
 
     for season, season_df in df.groupby("season"):
         full_path = f"{base_team_file_path}{season}.csv"
-        processed_season_df = add_columns(season_df, full_path)
+        processed_season_df = add_columns(
+            season_df, full_path, history_map, pos_avg_map
+        )
         processed_seasons.append(processed_season_df)
 
     combined_df = pd.concat(processed_seasons, ignore_index=True)
 
     return combined_df
+
+
+def get_historic_stats_map(df):
+    """
+    Returns a dictionary mapping (Player, Current_Season) -> Previous_Season_Stats
+    """
+    # Filter for valid games (where they actually played)
+    played_df = df[df["minutes"] > 45].copy()
+
+    # Group by Player and Season to get averages
+    season_stats = (
+        played_df.groupby(["name", "season"])
+        .agg(
+            {
+                "total_points": "mean",
+                "minutes": "mean",
+            }
+        )
+        .reset_index()
+    )
+
+    season_stats["total_points"] = season_stats["total_points"].round(2)
+    season_stats["minutes"] = season_stats["minutes"].round(0)
+
+    history_map = {}
+
+    # Helper to shift season string: "23_24" -> "24_25"
+    # This allows us to look up "23_24" stats using the "24_25" key
+    def get_next_season(s_str):
+        try:
+            start_year = int(s_str.split("_")[0])
+            end_year = int(s_str.split("_")[1])
+            return f"{start_year+1}_{end_year+1}"
+        except:
+            return None
+
+    for _, row in season_stats.iterrows():
+        next_season = get_next_season(row["season"])
+        if next_season:
+            # The Key is (Name, Next_Season)
+            history_map[(row["name"], next_season)] = {
+                "history_pps": row["total_points"],
+                "history_mpg": row["minutes"],
+            }
+
+    # Calculate Positional Averages (For Imputation of the First Season)
+    # This is the fallback for when history_map fails
+    position_averages = (
+        played_df.groupby("position")["total_points"].mean().round(2).to_dict()
+    )
+
+    return history_map, position_averages

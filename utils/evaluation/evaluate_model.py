@@ -1,4 +1,4 @@
-from utils.get_training_test_data import get_train_test_data
+from utils.processing.get_training_test_data import get_train_test_data
 import joblib
 import numpy as np
 from sklearn.metrics import ndcg_score

@@ -1,4 +1,4 @@
-from utils.get_training_test_data import get_train_test_data
+from utils.processing.get_training_test_data import get_train_test_data
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -9,7 +9,7 @@ model_params = {
     "max_depth": 10,
     "subsample": 0.8,
     "reg_lambda": 1,
-    "min_child_weight": 10,
+    "min_child_weight": 2,
     "objective": "reg:squarederror",
     "n_jobs": -1,
     "random_state": 42,
@@ -24,6 +24,7 @@ model.fit(X_train, y_train)
 
 # Save model
 joblib.dump(model, "data/saved_models/points/forest_model.pkl")
+
 
 def plot_actual_vs_predicted(y_true, y_pred):
     """
