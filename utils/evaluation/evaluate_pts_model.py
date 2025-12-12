@@ -91,7 +91,7 @@ def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=3):
 
 def save_score(model_name, model_scores, window_size):
     try:
-        scores_df = joblib.load("data/model_evaluation/model_scores.csv")
+        scores_df = pd.read_csv("data/model_evaluation/model_scores.csv")
     except:
         print("No dataframe for evaluations found, creating a new one...")
         scores_df = pd.DataFrame(

@@ -2,7 +2,7 @@ import pandas as pd
 import joblib
 from utils.processing.load_csv_to_df import load_csv_to_df
 from utils.processing.feature_processing import process_features
-from utils.processing.add_columns import add_columns
+from utils.processing.feature_engineering import prepare_features, add_rolling_features
 
 
 def get_train_test_data(
@@ -95,14 +95,15 @@ def do_feature_engineering(df):
 
     for season, season_df in df.groupby("season"):
         full_path = f"{base_team_file_path}{season}.csv"
-        processed_season_df = add_columns(
+        processed_season_df = prepare_features(
             season_df, full_path, history_map, pos_avg_map
         )
         processed_seasons.append(processed_season_df)
 
     combined_df = pd.concat(processed_seasons, ignore_index=True)
+    final_df = add_rolling_features(combined_df)
 
-    return combined_df
+    return final_df
 
 
 def get_historic_stats_map(df):
