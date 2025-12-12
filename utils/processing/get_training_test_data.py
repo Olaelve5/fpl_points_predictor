@@ -5,7 +5,9 @@ from utils.processing.feature_processing import process_features
 from utils.processing.add_columns import add_columns
 
 
-def get_train_test_data(minutes_training=False, minutes_classifier=False):
+def get_train_test_data(
+    minutes_training=False, minutes_classifier=False, test_season="25_26"
+):
     """Function to return processed training and test data."""
 
     try:
@@ -50,9 +52,11 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     target.clip(lower=0, inplace=True)
 
     # Use metadata to split train/test based on season
-    # The latest season "25_26" is the test set
-    train_mask = metadata["season"] != "25_26"
-    test_mask = metadata["season"] == "25_26"
+    # Only include seasons prior to test_season in training
+    metadata["season_int"] = metadata["season"].str.replace("_", "").astype(int)
+    test_season_int = int(test_season.replace("_", ""))
+    train_mask = metadata["season_int"] < test_season_int
+    test_mask = metadata["season_int"] == test_season_int
 
     X_train = features.loc[train_mask]
     y_train = target.loc[train_mask]
@@ -60,7 +64,8 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     y_test = target.loc[test_mask]
 
     # Get metadata specifically for the test set (for evaluation later)
-    test_meta = metadata.loc[test_mask]
+    test_meta = metadata.loc[test_mask].copy()
+    test_meta.drop("season_int", axis=1, inplace=True)
 
     # Save feature order for later use in prediction
     feature_order = X_train.columns.tolist()

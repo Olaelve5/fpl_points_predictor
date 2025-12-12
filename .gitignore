@@ -41,6 +41,7 @@ saved_plots/
 feature_order/
 prediction_data/
 training_data/
+model_evaluation/
 
 # IDE
 .vscode/
