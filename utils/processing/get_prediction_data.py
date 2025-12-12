@@ -1,5 +1,5 @@
 import pandas as pd
-from utils.load_csv_to_df import load_csv_to_df
+from utils.processing.load_csv_to_df import load_csv_to_df
 from utils.processing.feature_processing import process_features
 from utils.processing.add_columns import add_columns
 from utils.processing.add_columns import add_fixture_difficulty_rating

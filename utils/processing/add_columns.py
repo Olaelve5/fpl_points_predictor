@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from utils.fixture_difficulty import (
+from utils.processing.fixture_difficulty import (
     add_fixture_difficulty_rating,
     add_self_team_strength,
 )

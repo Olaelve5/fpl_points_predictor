@@ -1,5 +1,5 @@
 import streamlit as st
-from utils.load_csv_to_df import load_csv_to_df
+from utils.processing.load_csv_to_df import load_csv_to_df
 import altair as alt
 from models.prediction_pipeline import prediction_pipeline
 import os
