@@ -1,7 +1,7 @@
 import optuna
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import cross_val_score
-from utils.processing.get_training_test_data import get_train_test_data
+from utils.processing.get_train_test_data import get_train_test_data
 
 # --- Load your data once ---
 training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)

@@ -1,8 +1,7 @@
-from utils.processing.get_training_test_data import get_train_test_data
+from utils.processing.get_train_test_data import get_train_test_data
 import numpy as np
 from sklearn.metrics import ndcg_score
 import xgboost as xgb
-import joblib
 import pandas as pd
 from datetime import datetime
 

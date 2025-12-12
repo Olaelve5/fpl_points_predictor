@@ -1,7 +1,7 @@
 import pandas as pd
 import joblib
 from utils.processing.load_csv_to_df import load_csv_to_df
-from utils.processing.feature_processing import process_features
+from utils.processing.process_features import process_features
 from utils.processing.feature_engineering import prepare_features, add_rolling_features
 
 
@@ -28,28 +28,12 @@ def get_train_test_data(
     existing_meta_cols = [c for c in meta_cols if c in full_df.columns]
     metadata = full_df[existing_meta_cols].copy()
 
-    full_df = process_features(
-        full_df, is_training=True, is_points_model=not minutes_training
+    full_df, features, target = process_features(
+        full_df, is_training=True, is_minutes_model=minutes_training
     )
-
-    # Drop rows where targets are NaN
-    full_df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
 
     # Use the index to ensure we drop the exact same rows
     metadata = metadata.loc[full_df.index]
-
-    # Define features and target
-    if minutes_training:
-        features = full_df.drop(columns=["target_score", "predicted_minutes"])
-        if minutes_classifier:
-            target = (full_df["predicted_minutes"] > 1).astype(int)
-        else:
-            target = full_df["predicted_minutes"]
-    else:
-        features = full_df.drop(columns=["target_score"])
-        target = full_df["target_score"]
-
-    target.clip(lower=0, inplace=True)
 
     # Use metadata to split train/test based on season
     # Only include seasons prior to test_season in training

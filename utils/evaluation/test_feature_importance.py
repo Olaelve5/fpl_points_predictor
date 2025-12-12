@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import seaborn as sns
-from utils.processing.get_training_test_data import get_train_test_data
+from utils.processing.get_train_test_data import get_train_test_data
 import joblib
 
 

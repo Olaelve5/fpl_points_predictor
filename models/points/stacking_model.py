@@ -5,7 +5,7 @@ from sklearn.ensemble import (
 from sklearn.linear_model import RidgeCV
 from lightgbm import LGBMRegressor
 from models_operations.test import compare_model_to_baseline
-from utils.processing.get_training_test_data import get_train_test_data
+from utils.processing.get_train_test_data import get_train_test_data
 import numpy as np
 
 

@@ -97,6 +97,9 @@ def add_rolling_features(df, span_size=4):
     df["target_score"] = df.groupby("name")["total_points"].shift(-1)
     df["predicted_minutes"] = df.groupby("name")["minutes"].shift(-1)
 
+    # Drop rows where targets are NaN
+    df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
+
     return df
 
 

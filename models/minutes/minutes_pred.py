@@ -1,5 +1,5 @@
 from lightgbm import LGBMRegressor
-from utils.processing.get_training_test_data import get_train_test_data
+from utils.processing.get_train_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
