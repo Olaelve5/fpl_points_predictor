@@ -1,7 +1,7 @@
 from utils.processing.get_columns_to_drop import get_columns_to_drop
 
 
-def process_features(df, is_training=False):
+def process_features(df, is_training=False, is_points_model=False):
     """
     Centralized logic to clean/format data for BOTH training and prediction.
     """
@@ -20,7 +20,7 @@ def process_features(df, is_training=False):
 
     # 3. Drop Unwanted Columns
     # We assume get_columns_to_drop() returns the standard list for all models now
-    cols_to_drop = get_columns_to_drop()
+    cols_to_drop = get_columns_to_drop(is_points_model=is_points_model)
     df.drop(columns=cols_to_drop, inplace=True, errors="ignore")
 
     # 4. Training Specific: Drop Identifiers

@@ -58,6 +58,10 @@ def minutes_prediction_pipeline():
     rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
     classifier, regressor, feature_order = load_models()
 
+    # print features for debugging
+    print("Features used for prediction:")
+    print(feature_order)
+
     identifiers = rows_to_predict[
         [
             "name",

@@ -10,7 +10,7 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
 
     try:
         # Load the Master CSV
-        original_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
+        original_df = load_csv_to_df("data/players_data/players_20-21_to_25-26.csv")
     except FileNotFoundError:
         print("Error: CSV file not found.")
         return None, None, None, None, None
@@ -26,7 +26,9 @@ def get_train_test_data(minutes_training=False, minutes_classifier=False):
     existing_meta_cols = [c for c in meta_cols if c in full_df.columns]
     metadata = full_df[existing_meta_cols].copy()
 
-    full_df = process_features(full_df, is_training=True)
+    full_df = process_features(
+        full_df, is_training=True, is_points_model=not minutes_training
+    )
 
     # Drop rows where targets are NaN
     full_df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)

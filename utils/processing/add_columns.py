@@ -53,7 +53,7 @@ def add_columns(df, team_data_file_path=None, history_map=None, pos_avg_map=None
         df["last_season_minutes"] = 0
 
     # One-hot encode positions
-    position_dummies = pd.get_dummies(df["position"], prefix="pos")
+    position_dummies = pd.get_dummies(df["position"], prefix="pos", dtype=int)
     df = pd.concat([df, position_dummies], axis=1)
     df.drop("position", axis=1, inplace=True)
 

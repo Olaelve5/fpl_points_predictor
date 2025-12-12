@@ -9,8 +9,8 @@ player_data_base_path = (
 team_data_base_path = "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
 
 seasons = [
-    # "20_21",
-    # "21_22",
+    "20_21",
+    "21_22",
     "22_23",
     "23_24",
     "24_25",
@@ -31,8 +31,23 @@ def combine_csv(pull_latest_data=False):
         print(f"Processing season: {season}")
         df = load_csv_to_df(player_data_base_path + season + ".csv")
 
+        if "position" in df.columns:
+            df["position"] = df["position"].replace("GKP", "GK")
+
         # Add the season -> needed to add team data in feature engineering later
         df["season"] = season
+
+        # Remove expected data from 22_23 as it is all 0s any way
+        if season == "22_23":
+            df.drop(
+                columns=[
+                    "expected_goals",
+                    "expected_assists",
+                    "expected_goal_involvements",
+                    "expected_goals_conceded",
+                ],
+                inplace=True,
+            )
 
         all_processed_dfs.append(df)
         all_columns.update(df.columns)

@@ -139,7 +139,7 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test, _ = training_data
 
     # Cross validation
-    run_cross_validation(X_train, y_train, model_params)
+    # run_cross_validation(X_train, y_train, model_params)
 
     # Train model
     print("Training Final Model...")
