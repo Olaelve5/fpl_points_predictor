@@ -1,36 +1,35 @@
-from lightgbm import LGBMRegressor
+
 from utils.processing.get_train_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
-import lightgbm as lgb
 import pandas as pd
+from xgboost import XGBRegressor, plot_importance
 
 model_params = {
-    "objective": "regression",
+    "objective": "reg:squarederror",
     "n_estimators": 500,
     "learning_rate": 0.01,
-    "num_leaves": 50,
+    "max_depth": 7,  # Controls complexity (similar to num_leaves)
     "random_state": 42,
     "n_jobs": -1,
-    "alpha": 0.8,
-    "reg_lambda": 1.0,
+    "reg_alpha": 0.8,  # L1 Regularization
+    "reg_lambda": 1.0,  # L2 Regularization
     "colsample_bytree": 0.8,
     "subsample": 0.8,
 }
 
-
-model = LGBMRegressor(**model_params)
+model = XGBRegressor(**model_params)
 
 
 # --- Plotting Functions ---
-def plot_feature_importance(model):
+def plot_xgb_feature_importance(model):
     """
     Shows which features (xG, form, minutes) drive the points prediction.
+    XGBoost specific plotting function.
     """
     plt.figure(figsize=(10, 8))
-    # 'gain' measures how much the feature improved the loss (accuracy)
-    lgb.plot_importance(
-        model, max_num_features=20, importance_type="gain", figsize=(10, 8)
+    plot_importance(
+        model, max_num_features=20, importance_type="gain", height=0.5, grid=False
     )
     plt.title("Feature Importance (Gain) - What drives Points?")
     plt.show()
@@ -91,7 +90,6 @@ if __name__ == "__main__":
     print("Training complete.")
 
     # 3. Visualizations
-    plot_feature_importance(trained_model)
+    plot_importance(trained_model)
     plot_actual_vs_predicted(y_test, model_preds)
     plot_distribution_overlay(y_test, model_preds)
-

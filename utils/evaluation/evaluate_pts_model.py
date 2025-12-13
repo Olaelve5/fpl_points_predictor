@@ -1,9 +1,9 @@
 from utils.processing.get_train_test_data import get_train_test_data
 import numpy as np
 from sklearn.metrics import ndcg_score
-import xgboost as xgb
 import pandas as pd
 from datetime import datetime
+from xgboost import XGBRegressor
 
 
 def run_backtest(model_name, window_size):
@@ -22,16 +22,19 @@ def run_backtest(model_name, window_size):
         )
 
         model_params = {
-            "n_estimators": 1000,
-            "max_depth": 10,
-            "subsample": 0.8,
-            "reg_lambda": 1,
-            "min_child_weight": 2,
             "objective": "reg:squarederror",
-            "n_jobs": -1,
+            "n_estimators": 500,
+            "learning_rate": 0.01,
+            "max_depth": 7, 
             "random_state": 42,
+            "n_jobs": -1,
+            "reg_alpha": 0.8,  # L1 Regularization
+            "reg_lambda": 1.0,  # L2 Regularization
+            "colsample_bytree": 0.8,
+            "subsample": 0.8,
         }
-        model = xgb.XGBRFRegressor(**model_params)
+
+        model = XGBRegressor(**model_params)
 
         print("Training model...")
         model.fit(x_train, y_train)
@@ -128,4 +131,4 @@ def save_score(model_name, model_scores, window_size):
 
 
 if __name__ == "__main__":
-    run_backtest(model_name="forest_model", window_size=5)
+    run_backtest(model_name="XGB_boosting_model", window_size=5)
