@@ -17,6 +17,7 @@ def do_feature_engineering(df, drop_targets=True):
     processed_seasons = []
 
     for season, season_df in df.groupby("season"):
+        print(f"Processing features for season: {season}...")
         full_path = f"{base_team_file_path}{season}.csv"
         processed_season_df = prepare_features(
             season_df, full_path, history_map, pos_avg_map
@@ -25,6 +26,8 @@ def do_feature_engineering(df, drop_targets=True):
 
     combined_df = pd.concat(processed_seasons, ignore_index=True)
     final_df = add_rolling_features(combined_df, 4, drop_targets)
+
+    print(f"Feature engineering finished ✅")
 
     return final_df
 
@@ -73,8 +76,6 @@ def prepare_features(df, team_data_file_path=None, history_map=None, pos_avg_map
     # 6. Status
     if "status" not in df.columns:
         df["status"] = np.where(df["minutes"] > 0, "available", "unavailable")
-
-    print(f"Shape after adding new columns: {df.shape}")
 
     return df
 

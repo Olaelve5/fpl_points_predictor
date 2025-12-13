@@ -15,8 +15,6 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
 
     this_season_df = load_csv_to_df("data/players_data/merged_gw_25_26.csv")
 
-    print(f"Last round completed: {last_completed_round}")
-
     # Split the dataframe
     current_gw_rows = full_df[
         (full_df["round"] == last_completed_round) & (full_df["season"] == "25_26")
@@ -33,7 +31,7 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
 
     if future_gw_rows.empty:
         print(
-            "Warning: No future fixtures found in main CSV. Predictions will be empty."
+            "⚠️ Warning: No future fixtures found in main CSV. Predictions will be empty."
         )
         return None
 

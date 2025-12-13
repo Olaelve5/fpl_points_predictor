@@ -31,6 +31,9 @@ def prediction_pipeline():
 
     # Load points prediction model and make predictions
     points_model = joblib.load("data/saved_models/points/forest_model.pkl")
+
+    print("Predicting future points...")
+
     points_predictions = points_model.predict(rows_to_predict).round(1)
 
     final_df = df_with_mins.copy()
@@ -50,6 +53,8 @@ def prediction_pipeline():
     )
 
     final_df.to_csv("data/prediction_data/final_predictions.csv", index=False)
+
+    print("Success! Predictions saved ✅")
 
     return final_df
 

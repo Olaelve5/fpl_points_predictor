@@ -53,14 +53,10 @@ def minutes_prediction_pipeline():
     Also returns the feature order used.
     """
     last_round = get_last_completed_round()
-    print(f"--- Predicting for GW{last_round + 1} ---")
+    print(f"--- 🚀 Predicting for GW{last_round + 1} --- \n")
 
     _, rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
     classifier, regressor, feature_order = load_models()
-
-    # print features for debugging
-    print("Features used for prediction:")
-    print(feature_order)
 
     identifiers = rows_to_predict[
         [
@@ -82,7 +78,7 @@ def minutes_prediction_pipeline():
     X = rows_to_predict[feature_order].copy()
 
     # Make predictions
-    print("Running Two-Stage Model...")
+    print("\nRunning Two-Stage Minutes Model...")
     prob_playing = classifier.predict_proba(X)[:, 1]
     raw_minutes = regressor.predict(X)
 
@@ -119,7 +115,6 @@ def minutes_prediction_pipeline():
         "data/prediction_data/df_with_minutes_pred.csv", index=False
     )
 
+    print("Minutes successfully predicted ✅ \n")
+
     return results, X
-
-
-minutes_prediction_pipeline()
