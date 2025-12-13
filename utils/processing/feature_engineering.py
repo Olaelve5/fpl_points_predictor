@@ -6,6 +6,29 @@ from utils.processing.fixture_difficulty import (
 )
 
 
+def do_feature_engineering(df, drop_targets=True):
+    """Applies feature engineering in groups based on seasons."""
+
+    history_map, pos_avg_map = get_historic_stats_map(df)
+
+    base_team_file_path = (
+        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_"
+    )
+    processed_seasons = []
+
+    for season, season_df in df.groupby("season"):
+        full_path = f"{base_team_file_path}{season}.csv"
+        processed_season_df = prepare_features(
+            season_df, full_path, history_map, pos_avg_map
+        )
+        processed_seasons.append(processed_season_df)
+
+    combined_df = pd.concat(processed_seasons, ignore_index=True)
+    final_df = add_rolling_features(combined_df, 4, drop_targets)
+
+    return final_df
+
+
 def prepare_features(df, team_data_file_path=None, history_map=None, pos_avg_map=None):
     """
     Add last season features + fixture difficulty features.
@@ -56,7 +79,7 @@ def prepare_features(df, team_data_file_path=None, history_map=None, pos_avg_map
     return df
 
 
-def add_rolling_features(df, span_size=4):
+def add_rolling_features(df, span_size=4, drop_targets=True):
     """
     Adds rolling features to the dataset. Should be used on the whole dataset at once.
     Also adds target scores.
@@ -97,8 +120,9 @@ def add_rolling_features(df, span_size=4):
     df["target_score"] = df.groupby("name")["total_points"].shift(-1)
     df["predicted_minutes"] = df.groupby("name")["minutes"].shift(-1)
 
-    # Drop rows where targets are NaN
-    df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
+    # If drop_targets, drop rows where targets are NaN
+    if drop_targets:
+        df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
 
     return df
 
@@ -115,3 +139,55 @@ def get_history(row, history_map, pos_avg_map):
         return pos_avg_map[row["position"]], 70
 
     return 0, 60
+
+
+def get_historic_stats_map(df):
+    """
+    Returns a dictionary mapping (Player, Current_Season) -> Previous_Season_Stats
+    """
+    # Filter for valid games (where they actually played)
+    played_df = df[df["minutes"] > 45].copy()
+
+    # Group by Player and Season to get averages
+    season_stats = (
+        played_df.groupby(["name", "season"])
+        .agg(
+            {
+                "total_points": "mean",
+                "minutes": "mean",
+            }
+        )
+        .reset_index()
+    )
+
+    season_stats["total_points"] = season_stats["total_points"].round(2)
+    season_stats["minutes"] = season_stats["minutes"].round(0)
+
+    history_map = {}
+
+    # Helper to shift season string: "23_24" -> "24_25"
+    # This allows us to look up "23_24" stats using the "24_25" key
+    def get_next_season(s_str):
+        try:
+            start_year = int(s_str.split("_")[0])
+            end_year = int(s_str.split("_")[1])
+            return f"{start_year+1}_{end_year+1}"
+        except:
+            return None
+
+    for _, row in season_stats.iterrows():
+        next_season = get_next_season(row["season"])
+        if next_season:
+            # The Key is (Name, Next_Season)
+            history_map[(row["name"], next_season)] = {
+                "history_pps": row["total_points"],
+                "history_mpg": row["minutes"],
+            }
+
+    # Calculate Positional Averages (For Imputation of the First Season)
+    # This is the fallback for when history_map fails
+    position_averages = (
+        played_df.groupby("position")["total_points"].mean().round(2).to_dict()
+    )
+
+    return history_map, position_averages

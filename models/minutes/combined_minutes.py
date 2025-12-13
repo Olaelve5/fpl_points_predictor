@@ -55,7 +55,7 @@ def minutes_prediction_pipeline():
     last_round = get_last_completed_round()
     print(f"--- Predicting for GW{last_round + 1} ---")
 
-    rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
+    _, rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
     classifier, regressor, feature_order = load_models()
 
     # print features for debugging

@@ -1,29 +1,41 @@
 import pandas as pd
 from utils.processing.load_csv_to_df import load_csv_to_df
 from utils.processing.process_features import process_features
-from utils.processing.feature_engineering import add_columns
-from utils.processing.feature_engineering import add_fixture_difficulty_rating
-from utils.processing.get_train_test_data import get_historic_stats_map
+from utils.processing.feature_engineering import (
+    add_fixture_difficulty_rating,
+    do_feature_engineering,
+)
 
 
 def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     """Function to process raw data for making predictions."""
 
-    raw_df = load_csv_to_df("data/players_data/players_22-23_to_25-26.csv")
-    historic_points_map, positional_avg_map = get_historic_stats_map(raw_df)
+    raw_df = load_csv_to_df("data/players_data/players_20-21_to_25-26.csv")
+    full_df = do_feature_engineering(raw_df, drop_targets=False)
 
-    this_season = raw_df[raw_df["season"] == "25_26"].copy()
+    this_season_df = load_csv_to_df("data/players_data/merged_gw_25_26.csv")
 
-    full_df = add_columns(
-        this_season,
-        "data/team_data/teams_25_26.csv",
-        historic_points_map,
-        positional_avg_map,
-    )
+    print(f"Last round completed: {last_completed_round}")
 
     # Split the dataframe
-    current_gw_rows = full_df[full_df["round"] == last_completed_round]
-    future_gw_rows = full_df[full_df["round"] > last_completed_round]
+    current_gw_rows = full_df[
+        (full_df["round"] == last_completed_round) & (full_df["season"] == "25_26")
+    ].copy()
+
+    # Save for debugging
+    current_gw_rows.to_csv("data/debugging/current_gw.csv")
+
+    future_gw_rows = this_season_df[
+        this_season_df["round"] > last_completed_round
+    ].copy()
+
+    future_gw_rows.to_csv("data/debugging/future_gw.csv")
+
+    if future_gw_rows.empty:
+        print(
+            "Warning: No future fixtures found in main CSV. Predictions will be empty."
+        )
+        return None
 
     # Impute player data
     rows_to_predict = impute_values_into_future_gws(current_gw_rows, future_gw_rows)
@@ -52,17 +64,11 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     # Drop rows with NaN
     rows_to_predict = rows_to_predict.dropna(subset=["next_fixture_attack_rating"])
 
-    # Drop target columns
-    if is_minutes_model:
-        rows_to_predict.drop(
-            columns=["target_score", "minutes_next"], inplace=True, errors="ignore"
-        )
-    else:
-        rows_to_predict.drop(columns=["target_score"], inplace=True, errors="ignore")
+    processed_df, features, _ = process_features(
+        rows_to_predict, is_training=False, is_minutes_model=is_minutes_model
+    )
 
-    rows_to_predict = process_features(rows_to_predict, is_training=False)
-
-    return rows_to_predict
+    return processed_df, features
 
 
 def impute_values_into_future_gws(current_gw_rows, future_gw_rows):
