@@ -1,4 +1,3 @@
-
 from utils.processing.get_train_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -7,21 +6,47 @@ from xgboost import XGBRegressor, plot_importance
 
 model_params = {
     "objective": "reg:squarederror",
-    "n_estimators": 500,
-    "learning_rate": 0.01,
-    "max_depth": 7,  # Controls complexity (similar to num_leaves)
+    "n_estimators": 2000,
+    "learning_rate": 0.005,
+    "max_depth": 6,
     "random_state": 42,
     "n_jobs": -1,
     "reg_alpha": 0.8,  # L1 Regularization
     "reg_lambda": 1.0,  # L2 Regularization
     "colsample_bytree": 0.8,
     "subsample": 0.8,
+    "early_stopping_rounds": 50,
 }
 
 model = XGBRegressor(**model_params)
 
 
 # --- Plotting Functions ---
+def plot_learning_curve(model, metric="rmse"):
+    """
+    Plots the Training vs Validation Loss over time (epochs).
+    Helps identify Overfitting (if Train drops but Val rises) or Underfitting.
+    """
+    results = model.evals_result()
+
+    # Extract metrics
+    train_loss = results["validation_0"][metric]
+    val_loss = results["validation_1"][metric]
+    epochs = range(len(train_loss))
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(epochs, train_loss, label="Training Loss", color="blue")
+    plt.plot(epochs, val_loss, label="Validation Loss", color="orange")
+
+    plt.title("Learning Curve: Training vs Validation Loss")
+    plt.xlabel("Number of Estimators (Trees)")
+    plt.ylabel(f"Error ({metric.upper()})")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    plt.show()
+
+
 def plot_xgb_feature_importance(model):
     """
     Shows which features (xG, form, minutes) drive the points prediction.
@@ -80,7 +105,12 @@ if __name__ == "__main__":
     training_data = get_train_test_data()
     X_train, X_test, y_train, y_test, _ = training_data
 
-    trained_model = model.fit(X_train, y_train)
+    trained_model = model.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_train, y_train), (X_test, y_test)],
+        verbose=False,
+    )
     print("Model trained.")
 
     # save the model
@@ -90,6 +120,7 @@ if __name__ == "__main__":
     print("Training complete.")
 
     # 3. Visualizations
+    plot_learning_curve(trained_model)
     plot_importance(trained_model)
     plot_actual_vs_predicted(y_test, model_preds)
     plot_distribution_overlay(y_test, model_preds)

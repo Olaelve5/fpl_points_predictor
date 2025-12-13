@@ -23,21 +23,27 @@ def run_backtest(model_name, window_size):
 
         model_params = {
             "objective": "reg:squarederror",
-            "n_estimators": 500,
-            "learning_rate": 0.01,
-            "max_depth": 7, 
+            "n_estimators": 2000,
+            "learning_rate": 0.005,
+            "max_depth": 6,
             "random_state": 42,
             "n_jobs": -1,
             "reg_alpha": 0.8,  # L1 Regularization
             "reg_lambda": 1.0,  # L2 Regularization
             "colsample_bytree": 0.8,
             "subsample": 0.8,
+            "early_stopping_rounds": 50,
         }
 
         model = XGBRegressor(**model_params)
 
         print("Training model...")
-        model.fit(x_train, y_train)
+        model.fit(
+            x_train,
+            y_train,
+            eval_set=[(x_train, y_train), (x_test, y_test)],
+            verbose=False,
+        )
         print("Training complete.")
 
         predictions = model.predict(x_test)
