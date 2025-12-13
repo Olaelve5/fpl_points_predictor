@@ -16,12 +16,14 @@ def prediction_pipeline():
     It also fetches updated data if the local data is outdated.
     """
 
-    last_completed_round_api = get_last_completed_round()
-    last_completed_round_local = get_last_completed_round_local()
+    # Uncomment to fetch lates data - 
 
-    # Fetch new player data if the local data is outdated
-    if last_completed_round_api > last_completed_round_local:
-        fetch_all_players_data()
+    # last_completed_round_api = get_last_completed_round()
+    # last_completed_round_local = get_last_completed_round_local()
+
+    # # Fetch new player data if the local data is outdated
+    # if last_completed_round_api > last_completed_round_local:
+    #     fetch_all_players_data()
 
     _, df_with_mins = minutes_prediction_pipeline()
 
@@ -30,7 +32,7 @@ def prediction_pipeline():
     rows_to_predict = df_with_mins[points_feature_order]
 
     # Load points prediction model and make predictions
-    points_model = joblib.load("data/saved_models/points/boosting_model.pkl")
+    points_model = joblib.load("data/saved_models/points/voting_model.pkl")
 
     print("Predicting future points...")
 

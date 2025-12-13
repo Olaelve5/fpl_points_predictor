@@ -100,7 +100,6 @@ def add_rolling_features(df, span_size=4, drop_targets=True):
         "clean_sheets": {"name": "ewma_cs", "decimals": 2},
         "yellow_cards": {"name": "ewma_yellow_cards", "decimals": 2},
         "goals_conceded": {"name": "ewma_gc", "decimals": 2},
-        "defensive_contribution": {"name": "ewma_def_contr", "decimals": 2},
     }
 
     # Calculate EWMA for each column
