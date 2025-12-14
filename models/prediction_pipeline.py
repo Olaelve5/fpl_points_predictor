@@ -6,9 +6,10 @@ from fpl_api.fetch_updated_player_data import fetch_all_players_data
 from models.minutes.combined_minutes import minutes_prediction_pipeline
 import joblib
 from utils.processing.team_id_name_map import team_id_name_map
+from models.experts.experts_model import ExpertsModel
 
 
-def prediction_pipeline():
+def prediction_pipeline(points_model):
     """
     Orchestrates the full two-stage prediction pipeline:
     1. Predicts minutes.
@@ -28,9 +29,6 @@ def prediction_pipeline():
     # Load and use points feature order
     points_feature_order = joblib.load("data/feature_order/points_feature_order.pkl")
     rows_to_predict = df_with_mins[points_feature_order]
-
-    # Load points prediction model and make predictions
-    points_model = joblib.load("data/saved_models/points/voting_model.pkl")
 
     print("Predicting future points...")
 
@@ -59,4 +57,7 @@ def prediction_pipeline():
     return final_df
 
 
-prediction_pipeline()
+if __name__ == "__main__":
+    # Load points prediction model and make predictions
+    points_model = joblib.load("data/saved_models/points/voting_model.pkl")
+    prediction_pipeline(points_model)

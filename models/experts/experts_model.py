@@ -1,8 +1,11 @@
 from sqlalchemy import true
-from models.advanced_points.def_expert import get_def_model
-from models.advanced_points.fwd_expert import get_fwd_model
-from models.advanced_points.mid_expert import get_mid_model
-from models.advanced_points.gk_expert import get_gk_model
+from models.experts.models_configuration import (
+    get_def_model,
+    get_fwd_model,
+    get_gk_model,
+    get_mid_model,
+)
+
 from utils.processing.get_train_test_data import get_train_test_data
 import numpy as np
 import joblib
