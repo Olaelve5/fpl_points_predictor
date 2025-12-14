@@ -45,7 +45,7 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
 
     rows_to_predict = add_fixture_difficulty_rating(
         rows_to_predict,
-        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/teams_25_26.csv",
+        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/updated_teams_25_26.csv",
     )
 
     # Recalculate ratios

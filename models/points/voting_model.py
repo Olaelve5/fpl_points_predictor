@@ -1,6 +1,6 @@
 import joblib
 from xgboost import XGBRegressor
-from sklearn.ensemble import RandomForestRegressor, VotingRegressor
+from sklearn.ensemble import VotingRegressor
 from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
@@ -49,7 +49,6 @@ def train_voting_model(X_train, y_train):
 if __name__ == "__main__":
     X_train, _, y_train, _, _ = get_train_test_data(test_season="25_26")
     trained_model = train_voting_model(X_train, y_train)
-
 
     joblib.dump(trained_model, "data/saved_models/points/voting_model.pkl")
     print("✅ Voting Model Saved!")

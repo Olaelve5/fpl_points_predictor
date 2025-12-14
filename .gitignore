@@ -1,5 +1,3 @@
-# Create .gitignore file
-cat > .gitignore << EOF
 # Python
 __pycache__/
 *.py[cod]
@@ -30,7 +28,7 @@ ENV/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# Data files (optional - you might want to track some)
+# Data files
 *.csv
 *.pkl
 *.json
@@ -42,6 +40,7 @@ feature_order/
 prediction_data/
 training_data/
 model_evaluation/
+debugging/
 
 # IDE
 .vscode/
@@ -50,5 +49,3 @@ model_evaluation/
 # OS
 .DS_Store
 EOF
-
-*.txt

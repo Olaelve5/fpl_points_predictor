@@ -16,14 +16,12 @@ def prediction_pipeline():
     It also fetches updated data if the local data is outdated.
     """
 
-    # Uncomment to fetch lates data - 
+    last_completed_round_api = get_last_completed_round()
+    last_completed_round_local = get_last_completed_round_local()
 
-    # last_completed_round_api = get_last_completed_round()
-    # last_completed_round_local = get_last_completed_round_local()
-
-    # # Fetch new player data if the local data is outdated
-    # if last_completed_round_api > last_completed_round_local:
-    #     fetch_all_players_data()
+    # Fetch new player data if the local data is outdated
+    if last_completed_round_api > last_completed_round_local:
+        fetch_all_players_data()
 
     _, df_with_mins = minutes_prediction_pipeline()
 
