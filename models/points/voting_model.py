@@ -8,7 +8,7 @@ from utils.processing.get_train_test_data import get_train_test_data
 import xgboost as xgb
 
 
-def train_voting_model(X_train, y_train):
+def train_voting_model(X_train, y_train, weights=[0.1, 0.2, 0.7]):
     # Expert A: XGBoost
     xgb_model = XGBRegressor(
         n_estimators=2000,
@@ -35,7 +35,7 @@ def train_voting_model(X_train, y_train):
     # Tune voting weights
     ensemble = VotingRegressor(
         estimators=[("xgb", xgb_model), ("rf", rf_model), ("linear", linear_model)],
-        weights=[0.5, 0.3, 0.2],
+        weights=weights if weights else [0.4, 0.3, 0.3],
         n_jobs=-1,
     )
 

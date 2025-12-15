@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import xgboost as xgb
 import seaborn as sns
 from utils.processing.get_train_test_data import get_train_test_data
 import joblib
@@ -36,6 +35,6 @@ def plot_feature_importance(model, feature_names):
 # Usage:
 
 X_train, X_test, y_train, y_test, _ = get_train_test_data()
-model = joblib.load("data/saved_models/points/forest_model.pkl")
+model = joblib.load("data/saved_models/points/boosting_model.pkl")
 
 features = plot_feature_importance(model, X_train.columns)

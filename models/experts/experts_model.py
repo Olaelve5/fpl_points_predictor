@@ -1,4 +1,3 @@
-from sqlalchemy import true
 from models.experts.models_configuration import (
     get_def_model,
     get_fwd_model,

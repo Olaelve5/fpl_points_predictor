@@ -3,8 +3,8 @@ import numpy as np
 from sklearn.metrics import ndcg_score
 import pandas as pd
 from datetime import datetime
+from xgboost import XGBRegressor
 from models.points.voting_model import train_voting_model
-from models.experts.experts_model import ExpertsModel
 
 
 def run_backtest(model_name, window_size):
@@ -22,8 +22,20 @@ def run_backtest(model_name, window_size):
             minutes_training=False, test_season=season
         )
 
-        model = ExpertsModel()
-        model.fit(x_train, y_train, x_test, y_test)
+        model = XGBRegressor(
+            n_estimators=400,
+            learning_rate=0.01,
+            max_depth=4,
+            subsample=0.8,
+            min_child_weight=10,
+            # --- REGULARIZATION ---
+            reg_lambda=1.2,  # L2 (Ridge): Good for reducing variance/noise
+            # ----------------------
+            objective="reg:squarederror",
+            n_jobs=-1,
+            random_state=42,
+        )
+        model.fit(x_train, y_train)
         predictions = model.predict(x_test)
 
         y_actual = y_test.values
@@ -115,4 +127,4 @@ def save_score(model_name, model_scores, window_size):
 
 
 if __name__ == "__main__":
-    run_backtest(model_name="experts_model", window_size=5)
+    run_backtest(model_name="XGB_boosting_model", window_size=5)

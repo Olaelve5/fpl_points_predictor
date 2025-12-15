@@ -59,5 +59,5 @@ def prediction_pipeline(points_model):
 
 if __name__ == "__main__":
     # Load points prediction model and make predictions
-    points_model = joblib.load("data/saved_models/points/voting_model.pkl")
+    points_model = joblib.load("data/saved_models/points/boosting_model.pkl")
     prediction_pipeline(points_model)
