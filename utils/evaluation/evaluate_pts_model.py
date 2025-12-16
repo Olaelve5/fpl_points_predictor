@@ -107,7 +107,8 @@ def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=3):
         y_true = np.asarray([group["roll_act"].values])
         y_score = np.asarray([group["roll_pred"].values])
         if y_true.shape[1] > 1:
-            gw_scores.append(ndcg_score(y_true, y_score, k=10))
+            score = round(ndcg_score(y_true, y_score, k=10), 4)
+            gw_scores.append(score)
 
     return np.mean(gw_scores) if gw_scores else 0
 

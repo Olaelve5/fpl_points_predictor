@@ -4,34 +4,7 @@ from itertools import product
 from utils.processing.get_train_test_data import get_train_test_data
 from models.points.voting_model import train_voting_model
 from sklearn.metrics import ndcg_score
-
-
-# --- Helper: Rolling NDCG Calculation ---
-def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=5):
-    df = metadata.copy()
-    df["actual"] = y_actual
-    df["pred"] = y_pred
-
-    # Sort for rolling calculation
-    df.sort_values(by=["name", "round"], inplace=True)
-
-    # Calculate Rolling Sums
-    df["roll_act"] = df.groupby("name")["actual"].transform(
-        lambda x: x.rolling(window_size, min_periods=window_size).sum()
-    )
-    df["roll_pred"] = df.groupby("name")["pred"].transform(
-        lambda x: x.rolling(window_size, min_periods=window_size).sum()
-    )
-    df.dropna(subset=["roll_act", "roll_pred"], inplace=True)
-
-    gw_scores = []
-    for _, group in df.groupby("round"):
-        y_true = np.asarray([group["roll_act"].values])
-        y_score = np.asarray([group["roll_pred"].values])
-        if y_true.shape[1] > 1:
-            gw_scores.append(ndcg_score(y_true, y_score, k=10))
-
-    return np.mean(gw_scores) if gw_scores else 0
+from utils.evaluation.evaluate_pts_model import calculate_rolling_ndcg
 
 
 # --- Main Optimization Function ---
