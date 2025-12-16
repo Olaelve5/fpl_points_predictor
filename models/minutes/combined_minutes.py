@@ -3,6 +3,7 @@ import numpy as np
 import joblib
 from utils.processing.get_last_completed_round import get_last_completed_round
 from utils.processing.get_prediction_data import get_rows_to_predict
+import lightgbm as lgb
 
 
 # --- 1. Model Loading ---
@@ -124,15 +125,17 @@ def minutes_prediction_pipeline():
     return results, X
 
 
-def pipeline_for_testing(rows_to_predict):
+def pipeline_for_testing(reg_model, clf_model, rows_to_predict):
     """
     Function to run the minutes prediction pipeline for testing.
     Should not be used to predict future GWs.
 
     :param rows_to_predict: DataFrame containing the rows to predict minutes for.
     """
+    classifier = clf_model
+    regressor = reg_model
+    feature_order = joblib.load("data/feature_order/minutes_feature_order.pkl")
 
-    classifier, regressor, feature_order = load_models()
     X = rows_to_predict[feature_order].copy()
 
     # Make predictions
@@ -146,3 +149,63 @@ def pipeline_for_testing(rows_to_predict):
     print("Minutes successfully predicted for testing ✅ \n")
 
     return X
+
+
+def train_both_models(training_data, params_clf, params_reg):
+    X_train, X_test, y_train, y_test, _ = training_data
+
+    # ==========================================
+    # MODEL 1: THE CLASSIFIER (Probability of Playing)
+    # ==========================================
+    print("\n--- Training Classifier (Did they play?) ---")
+
+    # 1. Select Targets (Binary)
+    y_train_clf = y_train["classifier_target"]
+    y_test_clf = y_test["classifier_target"]
+
+    # 2. Train (Uses FULL dataset - needs to see zeros)
+    clf_model = lgb.LGBMClassifier(**params_clf)
+
+    clf_model.fit(
+        X_train,
+        y_train_clf,
+        eval_set=[(X_train, y_train_clf), (X_test, y_test_clf)],
+        eval_metric="logloss",  # AUC or logloss is best for binary classification
+        callbacks=[
+            lgb.early_stopping(100, verbose=True),
+            lgb.log_evaluation(100),
+        ],
+    )
+
+    # ==========================================
+    # MODEL 2: THE REGRESSOR (Minutes if Playing)
+    # ==========================================
+    print("\n--- Training Regressor (How long do they play?) ---")
+
+    # 1. Create Masks (Filter for > 5 mins)
+    # We must filter BOTH train and test for the learning phase
+    mask_train = y_train["regressor_target"] > 5
+    mask_test = y_test["regressor_target"] > 5
+
+    # 2. Apply Masks
+    X_train_reg = X_train.loc[mask_train]
+    y_train_reg = y_train.loc[mask_train, "regressor_target"]
+
+    X_test_reg = X_test.loc[mask_test]
+    y_test_reg = y_test.loc[mask_test, "regressor_target"]
+
+    # 3. Train (Uses FILTERED dataset)
+    reg_model = lgb.LGBMRegressor(**params_reg)
+
+    reg_model.fit(
+        X_train_reg,
+        y_train_reg,
+        eval_set=[(X_train_reg, y_train_reg), (X_test_reg, y_test_reg)],
+        eval_metric="mae",
+        callbacks=[
+            lgb.early_stopping(100, verbose=True),
+            lgb.log_evaluation(100),
+        ],
+    )
+
+    return clf_model, reg_model

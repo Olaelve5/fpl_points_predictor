@@ -9,8 +9,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.calibration import calibration_curve
 from utils.processing.get_train_test_data import get_train_test_data
 
-# --- 1. CONFIGURATION ---
-model_params = {
+clf_params = {
     "objective": "binary",
     "metric": "binary_logloss",
     "boosting_type": "gbdt",
@@ -25,9 +24,6 @@ model_params = {
     "max_depth": 12,
     "colsample_bytree": 0.66,
 }
-
-
-# --- 2. PLOTTING FUNCTIONS ---
 
 
 def plot_calibration_curve(y_true, y_prob):
@@ -131,24 +127,25 @@ def run_cross_validation(X, y, params, n_splits=5):
     print("------------------------------------------------")
 
 
-# --- 4. MAIN EXECUTION ---
-
 if __name__ == "__main__":
-    # Load Data
-    training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)
-    X_train, X_test, y_train, y_test, _ = training_data
+    X_train, X_test, y_train_full, y_test_full, _ = get_train_test_data(
+        minutes_training=True
+    )
+
+    y_train = y_train_full["classifier_target"]
+    y_test = y_test_full["classifier_target"]
 
     # Cross validation
     # run_cross_validation(X_train, y_train, model_params)
 
     # Train model
     print("Training Final Model...")
-    model = LGBMClassifier(**model_params)
+    model = LGBMClassifier(**clf_params)
     trained_model = model.fit(
         X_train,
         y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
-        eval_metric="auc",
+        eval_metric=["logloss", "auc"],
         callbacks=[lgb.early_stopping(100, verbose=True)],
     )
 

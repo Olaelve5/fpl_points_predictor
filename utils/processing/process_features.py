@@ -1,9 +1,8 @@
 from utils.processing.get_columns_to_drop import get_columns_to_drop
+import pandas as pd
 
 
-def process_features(
-    df, is_training=False, is_minutes_model=True, is_minutes_classifier=False
-):
+def process_features(df, is_training=False, is_minutes_model=True):
     """
     Centralized logic to clean/format data for both training and prediction.
     Returns full dataframe + features and targets
@@ -24,6 +23,18 @@ def process_features(
     cols_to_drop = get_columns_to_drop(is_minutes_model=is_minutes_model)
     df.drop(columns=cols_to_drop, inplace=True, errors="ignore")
 
+    # Define features and target
+    if is_minutes_model:
+        target = pd.DataFrame(index=df.index)
+        features = df.drop(columns=["target_score", "predicted_minutes"])
+        target["classifier_target"] = (df["predicted_minutes"] > 1).astype(int)
+        target["regressor_target"] = df["predicted_minutes"]
+    else:
+        features = df.drop(
+            columns=["target_score", "minutes", "ewma_minutes"], errors="ignore"
+        )
+        target = df["target_score"]
+
     # Training Specific: Drop Identifiers
     if is_training:
         drop_list = [
@@ -34,19 +45,11 @@ def process_features(
             "position",
             "kickoff_time",
         ]
-        df.drop(columns=drop_list, inplace=True, errors="ignore")
+        features.drop(columns=drop_list, inplace=True, errors="ignore")
 
-    # Define features and target
-    if is_minutes_model:
-        features = df.drop(columns=["target_score", "predicted_minutes"])
-        if is_minutes_classifier:
-            target = (df["predicted_minutes"] > 1).astype(int)
-        else:
-            target = df["predicted_minutes"]
-    else:
-        features = df.drop(columns=["target_score"])
-        target = df["target_score"]
-
-    target.clip(lower=0, inplace=True)
+    if isinstance(target, pd.DataFrame):
+        target = target.clip(lower=0)
+    elif isinstance(target, pd.Series):
+        target = target.clip(lower=0)
 
     return df, features, target

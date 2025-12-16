@@ -3,16 +3,13 @@ from utils.processing.get_train_test_data import get_train_test_data
 import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
-import pandas as pd
 import joblib
 
-# --- CONFIGURATION ---
-
 reg_params = {
-    "objective": "regression_l1",  # MAE Loss (so that it isn't scared to predict 90)
+    "objective": "regression_l1",
     "metric": "mae",
     "n_estimators": 1000,
-    "learning_rate": 0.01,  # Slightly higher LR than classifier is often ok for regression
+    "learning_rate": 0.01, 
     "num_leaves": 50,
     "random_state": 42,
     "n_jobs": -1,
@@ -23,11 +20,7 @@ reg_params = {
 model = LGBMRegressor(**reg_params)
 
 
-# --- PLOTTING FUNCTIONS ---
-
-
 def plot_results(y_true, y_pred):
-    # 1. Scatter Plot (Accuracy)
     plt.figure(figsize=(10, 6))
     plt.scatter(y_true, y_pred, alpha=0.5)
 
@@ -53,11 +46,7 @@ def plot_results(y_true, y_pred):
 
 
 def plot_learning_curve(model):
-    # 1. Get the history dictionary
     results = model.evals_result_
-
-    print("Available eval results keys:", results.keys())
-    print("Training metrics keys:", results["training"].keys())
 
     metric_key = "l1"
     if "l1" not in results["training"]:
@@ -92,29 +81,41 @@ def plot_importance(model):
 
 if __name__ == "__main__":
     training_data = get_train_test_data(minutes_training=True)
+    X_train_full, X_test_full, y_train_full, y_test_full, _ = training_data
 
-    X_train, X_test, y_train, y_test, _ = training_data
+    # --- Train Set Split ---
+    # Filter to only players who played > 5 mins for regression training
+    train_mask = y_train_full["regressor_target"] > 5
+    X_train_reg = X_train_full.loc[train_mask]
+    y_train_reg = y_train_full.loc[train_mask, "regressor_target"]
 
+    # --- Test Set Split ---
+    # We filter test set here so the MAE doesn't explode due to bench players
+    test_mask = y_test_full["regressor_target"] > 5
+    X_test_reg = X_test_full.loc[test_mask]
+    y_test_reg = y_test_full.loc[test_mask, "regressor_target"]
+
+    print(f"Training on {len(X_train_reg)} samples (Filtered > 5 mins)")
+    print(f"Validating on {len(X_test_reg)} samples (Filtered > 5 mins)")
+
+    # Train
     trained_model = model.fit(
-        X_train,
-        y_train,
-        eval_set=[(X_train, y_train), (X_test, y_test)],
+        X_train_reg,
+        y_train_reg,
+        eval_set=[(X_train_reg, y_train_reg), (X_test_reg, y_test_reg)],
         eval_metric="mae",
         callbacks=[
             lgb.early_stopping(100, verbose=True),
-            lgb.log_evaluation(100),  # print progress every 100 trees
+            lgb.log_evaluation(100),
         ],
     )
 
-    # Save model
     joblib.dump(trained_model, "data/saved_models/minutes/minutes_regression_model.pkl")
 
-    model_preds = trained_model.predict(X_test)
-
-    print("Max regressor prediction:", model_preds.max())
-    print("Min regressor prediction:", model_preds.min())
+    # Predict and evaluate
+    model_preds = trained_model.predict(X_test_reg)
 
     # Plotting
-    plot_results(y_test, model_preds)
+    plot_results(y_test_reg, model_preds)
     plot_learning_curve(trained_model)
     plot_importance(trained_model)

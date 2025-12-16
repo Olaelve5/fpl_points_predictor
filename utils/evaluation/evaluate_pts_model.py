@@ -5,6 +5,10 @@ import pandas as pd
 from datetime import datetime
 from xgboost import XGBRegressor
 from models.points.voting_model import train_voting_model
+from models.minutes.combined_minutes import train_both_models, pipeline_for_testing
+from models.minutes.minutes_classifier import clf_params
+from models.minutes.minutes_pred import reg_params
+import joblib
 
 
 def run_backtest(model_name, window_size):
@@ -18,31 +22,52 @@ def run_backtest(model_name, window_size):
     for season in test_seasons:
         print(f"\nEvaluating on Season: {season}")
 
-        x_train, x_test, y_train, y_test, test_metadata = get_train_test_data(
+        training_data_pts = get_train_test_data(
             minutes_training=False, test_season=season
         )
 
+        training_data_mins = get_train_test_data(
+            minutes_training=True, test_season=season
+        )
+
+        # Train minutes models
+        clf_model, reg_model = train_both_models(
+            training_data_mins, clf_params, reg_params
+        )
+
+        # Configure and train points model
         model = XGBRegressor(
             n_estimators=400,
             learning_rate=0.01,
             max_depth=4,
             subsample=0.8,
             min_child_weight=10,
-            # --- REGULARIZATION ---
             reg_lambda=1.2,  # L2 (Ridge): Good for reducing variance/noise
-            # ----------------------
             objective="reg:squarederror",
             n_jobs=-1,
             random_state=42,
         )
-        model.fit(x_train, y_train)
-        predictions = model.predict(x_test)
+        x_train_pts, x_test_pts, y_train_pts, y_test_pts, test_metadata_pts = (
+            training_data_pts
+        )
+        model.fit(x_train_pts, y_train_pts)
 
-        y_actual = y_test.values
+        # Predictions - first mins model, then points model
+        print("\nPredicting Minutes for Test Set...")
+        df_with_pred_mins = pipeline_for_testing(reg_model, clf_model, x_test_pts)
+
+        print("\nPredicting Points for Test Set...")
+        joblib.load("data/feature_order/points_feature_order.pkl")
+        X_pts = df_with_pred_mins[
+            joblib.load("data/feature_order/points_feature_order.pkl")
+        ]
+        predictions = model.predict(X_pts)
+
+        y_actual = y_test_pts.values
         y_pred = predictions
 
         avg_season_score = calculate_rolling_ndcg(
-            test_metadata, y_actual, y_pred, window_size
+            test_metadata_pts, y_actual, y_pred, window_size
         ).round(4)
 
         all_scores.append(avg_season_score)

@@ -5,9 +5,7 @@ from utils.processing.process_features import process_features
 from utils.processing.feature_engineering import do_feature_engineering
 
 
-def get_train_test_data(
-    minutes_training=False, minutes_classifier=False, test_season="25_26"
-):
+def get_train_test_data(minutes_training=False, test_season="25_26"):
     """Function to return processed training and test data."""
 
     try:
@@ -19,10 +17,6 @@ def get_train_test_data(
 
     full_df = do_feature_engineering(original_df)
 
-    # Filter for minutes training if needed
-    if minutes_training and not minutes_classifier:
-        full_df = full_df[full_df["predicted_minutes"] >= 5].copy()
-
     # We save these columns now because process_features drops them
     meta_cols = ["name", "team", "position", "season", "round", "total_points"]
     existing_meta_cols = [c for c in meta_cols if c in full_df.columns]
@@ -32,7 +26,6 @@ def get_train_test_data(
         full_df,
         is_training=True,
         is_minutes_model=minutes_training,
-        is_minutes_classifier=minutes_classifier,
     )
 
     # Use the index to ensure we drop the exact same rows
