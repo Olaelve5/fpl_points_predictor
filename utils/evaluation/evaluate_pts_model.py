@@ -72,7 +72,7 @@ def run_backtest(model_name, window_size):
     save_score(model_name, season_scores, window_size)
 
 
-def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=3):
+def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=5):
     """
     Helper to calculate average NDCG for a single dataframe/season
     """
