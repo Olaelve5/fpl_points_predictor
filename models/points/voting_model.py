@@ -6,20 +6,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from utils.processing.get_train_test_data import get_train_test_data
 import xgboost as xgb
+from models.points.gradient_boost import model_params
 
 
-def train_voting_model(X_train, y_train, weights=[0.1, 0.2, 0.7]):
+def train_voting_model(X_train, y_train, weights=[0.1, 0.3, 0.6]):
     # Expert A: XGBoost
-    xgb_model = XGBRegressor(
-        n_estimators=2000,
-        learning_rate=0.005,
-        max_depth=6,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="reg:squarederror",
-        n_jobs=-1,
-        random_state=42,
-    )
+    xgb_model = XGBRegressor(**model_params)
 
     # Expert B: Random Forest
     rf_model = xgb.XGBRFRegressor(

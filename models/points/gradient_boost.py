@@ -4,19 +4,24 @@ import seaborn as sns
 import pandas as pd
 from xgboost import XGBRegressor, plot_importance
 
-model = XGBRegressor(
-    n_estimators=400,
-    learning_rate=0.01,
-    max_depth=4,
-    subsample=0.8,
-    min_child_weight=10,
-    # --- REGULARIZATION ---
-    reg_lambda=1.2,  # L2 (Ridge): Good for reducing variance/noise
-    # ----------------------
-    objective="reg:squarederror",
-    n_jobs=-1,
-    random_state=42,
-)
+
+# Model parameters
+model_params = {
+    "n_estimators": 600,
+    "learning_rate": 0.00507478,
+    "max_depth": 4,
+    "subsample": 0.7280711396060937,
+    "colsample_bytree": 0.6376547363658269,
+    "min_child_weight": 5,
+    "reg_lambda": 4.524613837227617,
+    "gamma": 0.08361061114366114,
+    "objective": "reg:squarederror",
+    "n_jobs": -1,
+    "random_state": 42,
+}
+
+# Initialize model with parameters
+model = XGBRegressor(**model_params)
 
 
 # --- Plotting Functions ---

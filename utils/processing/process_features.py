@@ -30,9 +30,7 @@ def process_features(df, is_training=False, is_minutes_model=True):
         target["classifier_target"] = (df["predicted_minutes"] > 1).astype(int)
         target["regressor_target"] = df["predicted_minutes"]
     else:
-        features = df.drop(
-            columns=["target_score", "minutes", "ewma_minutes"], errors="ignore"
-        )
+        features = df.drop(columns=["target_score"], errors="ignore")
         target = df["target_score"]
 
     # Training Specific: Drop Identifiers

@@ -13,7 +13,7 @@ def search_params_optuna(window_size=WINDOW_SIZE, n_trials=N_TRIALS):
     test_seasons = ["23_24", "24_25", "25_26"]
     data_cache = {}
 
-    # 1. Load Data Once (Cache it)
+    # Load Data Once (Cache it)
     print("--- Loading Data into Cache ---")
     for season in test_seasons:
         print(f"Loading {season}...")
@@ -23,9 +23,8 @@ def search_params_optuna(window_size=WINDOW_SIZE, n_trials=N_TRIALS):
         data_cache[season] = (x_tr, x_te, y_tr, y_te, meta)
     print("--- Data Loaded ---\n")
 
-    # 2. Define the Objective Function for Optuna
+    # Define the Objective Function for Optuna
     def objective(trial):
-        # Define the search space dynamically
         params = {
             "n_estimators": trial.suggest_int("n_estimators", 300, 800, step=100),
             "learning_rate": trial.suggest_float(
@@ -63,13 +62,12 @@ def search_params_optuna(window_size=WINDOW_SIZE, n_trials=N_TRIALS):
             )
             scores.append(round(score, 4))
 
-        # Optuna minimizes by default, but we want to MAXIMIZE correlation/NDCG.
-        # So we return the score, and tell study direction="maximize" later.
         return np.mean(scores)
 
     # 3. Create Study and Optimize
     print(f"Starting Optuna Optimization with {n_trials} trials...")
-    study = optuna.create_study(direction="maximize")
+    sampler = optuna.samplers.TPESampler(n_startup_trials=20)
+    study = optuna.create_study(direction="maximize", sampler=sampler)
     study.optimize(objective, n_trials=n_trials)
 
     print("\n--- OPTIMIZATION FINISHED ---")

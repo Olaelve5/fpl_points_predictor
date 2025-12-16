@@ -80,7 +80,7 @@ def prepare_features(df, team_data_file_path=None, history_map=None, pos_avg_map
     return df
 
 
-def add_rolling_features(df, span_size=4, drop_targets=True):
+def add_rolling_features(df, span_size=6, drop_targets=True):
     """
     Adds rolling features to the dataset. Should be used on the whole dataset at once.
     Also adds target scores.

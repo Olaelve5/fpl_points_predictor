@@ -9,6 +9,7 @@ from models.minutes.combined_minutes import train_both_models, pipeline_for_test
 from models.minutes.minutes_classifier import clf_params
 from models.minutes.minutes_pred import reg_params
 import joblib
+from models.points.gradient_boost import model_params
 
 
 def run_backtest(model_name, window_size):
@@ -36,21 +37,10 @@ def run_backtest(model_name, window_size):
         )
 
         # Configure and train points model
-        model = XGBRegressor(
-            n_estimators=400,
-            learning_rate=0.01,
-            max_depth=4,
-            subsample=0.8,
-            min_child_weight=10,
-            reg_lambda=1.2,  # L2 (Ridge): Good for reducing variance/noise
-            objective="reg:squarederror",
-            n_jobs=-1,
-            random_state=42,
-        )
         x_train_pts, x_test_pts, y_train_pts, y_test_pts, test_metadata_pts = (
             training_data_pts
         )
-        model.fit(x_train_pts, y_train_pts)
+        model = train_voting_model(x_train_pts, y_train_pts)
 
         # Predictions - first mins model, then points model
         print("\nPredicting Minutes for Test Set...")
@@ -153,4 +143,4 @@ def save_score(model_name, model_scores, window_size):
 
 
 if __name__ == "__main__":
-    run_backtest(model_name="XGB_boosting_model", window_size=5)
+    run_backtest(model_name="voting_model", window_size=5)
