@@ -5,12 +5,14 @@ from utils.processing.feature_engineering import (
     add_fixture_difficulty_rating,
     do_feature_engineering,
 )
+from data_processing.combine_csv import combine_csv
 
 
 def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     """Function to process raw data for making predictions."""
 
-    raw_df = load_csv_to_df("data/players_data/players_20-21_to_25-26.csv")
+    # Update and combine CSVs
+    raw_df = combine_csv()
     full_df = do_feature_engineering(raw_df, drop_targets=False)
 
     this_season_df = load_csv_to_df("data/players_data/merged_gw_25_26.csv")
@@ -45,7 +47,7 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
 
     rows_to_predict = add_fixture_difficulty_rating(
         rows_to_predict,
-        "/Users/ola/Documents/FPL_Price_Predictor/data/team_data/updated_teams_25_26.csv",
+        "data/team_data/updated_teams_25_26.csv",
     )
 
     # Recalculate ratios

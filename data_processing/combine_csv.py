@@ -19,6 +19,8 @@ seasons = [
 
 
 def combine_csv(pull_latest_data=False):
+    print("Combining player data CSVs...")
+
     # Pull latest data if 25_26 in seasons
     if "25_26" in seasons and pull_latest_data:
         fetch_all_players_data()
@@ -72,7 +74,7 @@ def combine_csv(pull_latest_data=False):
         index=False,
     )
 
-    print("Combined CSV saved successfully.")
+    print("Combined CSV saved successfully. \n")
 
     return combined_df
 

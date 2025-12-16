@@ -52,10 +52,14 @@ def minutes_prediction_pipeline():
     Returns two DataFrames - one with all features and one with only identifier features.
     Also returns the feature order used.
     """
+
     last_round = get_last_completed_round()
     print(f"--- 🚀 Predicting for GW{last_round + 1} --- \n")
-
     _, rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
+
+    print(rows_to_predict.shape[0], "players to predict minutes for.")
+    print(rows_to_predict.head())
+
     classifier, regressor, feature_order = load_models()
 
     identifiers = rows_to_predict[
@@ -118,3 +122,27 @@ def minutes_prediction_pipeline():
     print("Minutes successfully predicted ✅ \n")
 
     return results, X
+
+
+def pipeline_for_testing(rows_to_predict):
+    """
+    Function to run the minutes prediction pipeline for testing.
+    Should not be used to predict future GWs.
+
+    :param rows_to_predict: DataFrame containing the rows to predict minutes for.
+    """
+
+    classifier, regressor, feature_order = load_models()
+    X = rows_to_predict[feature_order].copy()
+
+    # Make predictions
+    print("\nRunning Two-Stage Minutes Model for Testing...")
+    prob_playing = classifier.predict_proba(X)[:, 1]
+    raw_minutes = regressor.predict(X)
+    predicted_minutes = np.round(prob_playing * raw_minutes).astype(int).clip(0, 90)
+
+    X["predicted_minutes"] = predicted_minutes
+
+    print("Minutes successfully predicted for testing ✅ \n")
+
+    return X
