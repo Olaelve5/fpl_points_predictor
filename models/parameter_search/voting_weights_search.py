@@ -3,7 +3,7 @@ import numpy as np
 from itertools import product
 from utils.processing.get_train_test_data import get_train_test_data
 from models.points.voting_model import train_voting_model
-from utils.evaluation.evaluate_pts_model import calculate_rolling_ndcg
+from utils.evaluation.evaluate_model import calculate_rolling_ndcg
 
 
 def optimize_voting_weights(window_size=5):

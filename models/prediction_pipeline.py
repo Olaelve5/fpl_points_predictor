@@ -7,6 +7,7 @@ from models.minutes.combined_minutes import minutes_prediction_pipeline
 import joblib
 from utils.processing.team_id_name_map import team_id_name_map
 from models.experts.experts_model import ExpertsModel
+from utils.processing.pts_columns_to_keep import get_selected_features
 
 
 def prediction_pipeline(points_model):
@@ -32,7 +33,10 @@ def prediction_pipeline(points_model):
 
     print("Predicting future points...")
 
-    points_predictions = points_model.predict(rows_to_predict).round(1)
+    # Filter to selected features only and make predictions
+    points_predictions = points_model.predict(
+        rows_to_predict[get_selected_features()]
+    ).round(1)
 
     final_df = df_with_mins.copy()
     final_df["predicted_points"] = points_predictions

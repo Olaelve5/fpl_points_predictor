@@ -3,11 +3,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from xgboost import XGBRegressor, plot_importance
+from utils.processing.pts_columns_to_keep import get_selected_features
 
 
 # Model parameters
 model_params = {
-    "n_estimators": 600,
+    "n_estimators": 1500,
     "learning_rate": 0.00507478,
     "max_depth": 4,
     "subsample": 0.7280711396060937,
@@ -18,6 +19,7 @@ model_params = {
     "objective": "reg:squarederror",
     "n_jobs": -1,
     "random_state": 42,
+    "early_stopping_rounds": 100,
 }
 
 # Initialize model with parameters
@@ -107,6 +109,11 @@ if __name__ == "__main__":
     # 1. Train the model
     training_data = get_train_test_data()
     X_train, X_test, y_train, y_test, _ = training_data
+
+    features_to_use = get_selected_features()
+
+    X_train = X_train[features_to_use]
+    X_test = X_test[features_to_use]
 
     trained_model = model.fit(
         X_train,

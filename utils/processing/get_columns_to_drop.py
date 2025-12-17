@@ -27,8 +27,4 @@ def get_columns_to_drop(is_minutes_model=True):
         "value_x_consistency",
     ]
 
-    if not is_minutes_model:
-        columns_to_drop.append("minutes")
-        columns_to_drop.append("ewma_minutes")
-
     return columns_to_drop

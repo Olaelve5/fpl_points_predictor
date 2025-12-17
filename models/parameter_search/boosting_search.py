@@ -2,7 +2,7 @@ import optuna
 import numpy as np
 from xgboost import XGBRegressor
 from utils.processing.get_train_test_data import get_train_test_data
-from utils.evaluation.evaluate_pts_model import calculate_rolling_ndcg
+from utils.evaluation.evaluate_model import calculate_rolling_ndcg
 
 
 N_TRIALS = 50
