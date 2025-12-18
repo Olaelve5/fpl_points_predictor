@@ -5,7 +5,13 @@ import seaborn as sns
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
 from sklearn.model_selection import StratifiedKFold
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import (
+    confusion_matrix,
+    log_loss,
+    brier_score_loss,
+    roc_auc_score,
+    precision_recall_curve,
+)
 from sklearn.calibration import calibration_curve
 from utils.processing.get_train_test_data import get_train_test_data
 
@@ -57,24 +63,6 @@ def plot_confusion_matrix(y_test, y_pred):
     plt.show()
 
 
-def plot_loss_curve(model):
-    results = model.evals_result_
-    # Note: LGBM calls it 'binary_logloss' in the results dict
-    train_loss = results["training"]["binary_logloss"]
-    val_loss = results["valid_1"]["binary_logloss"]
-    epochs = range(len(train_loss))
-
-    plt.figure(figsize=(10, 6))
-    plt.plot(epochs, train_loss, label="Training LogLoss")
-    plt.plot(epochs, val_loss, label="Validation LogLoss")
-    plt.title("LogLoss Curve")
-    plt.xlabel("Trees")
-    plt.ylabel("LogLoss (Lower is Better)")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-
-
 def plot_learning_curve(model):
     results = model.evals_result_
     train_auc = results["training"]["auc"]
@@ -92,39 +80,121 @@ def plot_learning_curve(model):
     plt.show()
 
 
+def plot_importance(model):
+    plt.figure(figsize=(10, 8))
+    lgb.plot_importance(
+        model, max_num_features=20, importance_type="gain", figsize=(10, 8)
+    )
+    plt.title("Feature Importance (Gain)")
+    plt.show()
+
+
 # --- 3. VALIDATION LOGIC ---
 
 
-def run_cross_validation(X, y, params, n_splits=5):
+def evaluate_model_performance(model, X_test, y_test):
     """
-    Runs 5 separate training rounds on different data slices to check stability.
+    Evaluates the model against naive baselines and plots safety thresholds.
     """
-    skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
-    auc_scores = []
+    print("--- 📊 Model Evaluation Report ---")
 
-    print(f"Starting Cross-Validation with {n_splits} folds...")
+    # [:, 1] gets the probability of class 1 (Playing)
+    y_prob = model.predict_proba(X_test)[:, 1]
 
-    fold_no = 1
-    for train_index, val_index in skf.split(X, y):
-        X_tr, X_val = X.iloc[train_index], X.iloc[val_index]
-        y_tr, y_val = y.iloc[train_index], y.iloc[val_index]
+    # 1. Baseline A: "Played last game" (Deterministic - Simple Baseline)
+    baseline_last_game = (X_test["minutes"] > 0).astype(int)
 
-        clf = LGBMClassifier(**params)
-        clf.fit(
-            X_tr,
-            y_tr,
-            eval_set=[(X_val, y_val)],
-            eval_metric="auc",
-            callbacks=[lgb.early_stopping(100, verbose=False)],
+    # Baseline B: "Percentage played last 5 games" (Probabilistic - Stronger Baseline)
+    if "played_last_5_pct" in X_test.columns:
+        baseline_form_prob = X_test["played_last_5_pct"]
+    else:
+        print("⚠️ 'played_last_5_pct' not found. Skipping Form Baseline.")
+        baseline_form_prob = None
+
+    # 3. Calculate Metrics Dictionary
+    metrics = {
+        "Model": {
+            "LogLoss": log_loss(y_test, y_prob),
+            "Brier": brier_score_loss(y_test, y_prob),
+            "AUC": roc_auc_score(y_test, y_prob),
+        },
+        "Baseline (Last Game)": {
+            "LogLoss": log_loss(y_test, baseline_last_game),
+            "Brier": brier_score_loss(y_test, baseline_last_game),
+            "AUC": roc_auc_score(y_test, baseline_last_game),
+        },
+    }
+
+    if baseline_form_prob is not None:
+        metrics["Baseline (Form)"] = {
+            "LogLoss": log_loss(y_test, baseline_form_prob),
+            "Brier": brier_score_loss(y_test, baseline_form_prob),
+            "AUC": roc_auc_score(y_test, baseline_form_prob),
+        }
+
+    # 4. Print Comparison Table
+    results_df = pd.DataFrame(metrics).T
+    print("\nMetric Comparison (Lower LogLoss/Brier is better):")
+    print(results_df.round(4))
+
+    # Check if we beat the baseline
+    if baseline_form_prob is not None:
+        if metrics["Model"]["LogLoss"] < metrics["Baseline (Form)"]["LogLoss"]:
+            print("\n✅ SUCCESS: Your model is beating the 'Form' baseline!")
+        else:
+            print(
+                "\n❌ WARNING: Your model is WORSE than just using 'played_last_5_pct'."
+            )
+            print("Action: Check if you are overfitting or need better features.")
+
+    # 5. Find Safety Threshold (The 'Expert' Metric)
+    find_safety_threshold(y_test, y_prob)
+
+    return results_df
+
+
+def find_safety_threshold(y_test, y_prob, target_recall=0.98):
+    """
+    Finds the probability cutoff where the model capture 98% of actual starters.
+    """
+    precisions, recalls, thresholds = precision_recall_curve(y_test, y_prob)
+
+    # Find index where recall is closest to target
+    idx = (np.abs(recalls - target_recall)).argmin()
+
+    # Handle edge case if idx is out of bounds for thresholds
+    if idx < len(thresholds):
+        optimal_threshold = thresholds[idx]
+        current_precision = precisions[idx]
+    else:
+        optimal_threshold = 0.0
+        current_precision = 0.0
+
+    print(f"\n--- 🛡️ Safety Threshold Analysis ---")
+    print(f"Goal: Don't miss more than {(1-target_recall)*100:.0f}% of starters.")
+    print(f"Recommended Cutoff: P(Play) >= {optimal_threshold:.3f}")
+    print(f"At this cutoff, Precision is: {current_precision:.3f}")
+    print(
+        "(Meaning: Of the players you keep, {:.1f}% will actually play)".format(
+            current_precision * 100
         )
+    )
 
-        score = clf.best_score_["valid_0"]["auc"]
-        auc_scores.append(score)
-        print(f"Fold {fold_no} AUC: {score:.4f}")
-        fold_no += 1
-
-    print(f"\nMean AUC: {np.mean(auc_scores):.4f} +/- {np.std(auc_scores):.4f}")
-    print("------------------------------------------------")
+    # Simple Plot
+    plt.figure(figsize=(8, 5))
+    plt.plot(thresholds, precisions[:-1], label="Precision (Trust)")
+    plt.plot(thresholds, recalls[:-1], label="Recall (Safety)")
+    plt.axvline(
+        optimal_threshold,
+        color="red",
+        linestyle="--",
+        label=f"Cutoff {optimal_threshold:.2f}",
+    )
+    plt.xlabel("Probability Threshold")
+    plt.title("Trade-off: Safety vs Trust")
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -134,9 +204,6 @@ if __name__ == "__main__":
 
     y_train = y_train_full["classifier_target"]
     y_test = y_test_full["classifier_target"]
-
-    # Cross validation
-    # run_cross_validation(X_train, y_train, model_params)
 
     # Train model
     print("Training Final Model...")
@@ -154,15 +221,14 @@ if __name__ == "__main__":
         trained_model, "data/saved_models/minutes/minutes_classifier_model.pkl"
     )
 
-    # Evaluate
     model_preds = trained_model.predict(X_test)
     model_proba = trained_model.predict_proba(X_test)[:, 1]
 
-    print(f"Max prediction prob: {model_proba.max():.4f}")
-    print(f"Min prediction prob: {model_proba.min():.4f}")
-
     # Visualizations
-    plot_loss_curve(model)
     plot_confusion_matrix(y_test, model_preds)
+    plot_importance(trained_model)
     plot_learning_curve(trained_model)
     plot_calibration_curve(y_test, model_proba)
+
+    # Evaluate performance
+    evaluate_model_performance(trained_model, X_test, y_test)
