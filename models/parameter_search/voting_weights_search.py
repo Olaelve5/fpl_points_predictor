@@ -2,8 +2,8 @@ import pandas as pd
 import numpy as np
 from itertools import product
 from utils.processing.get_train_test_data import get_train_test_data
-from models.points.voting_model import train_voting_model
-from utils.evaluation.evaluate_model import calculate_rolling_ndcg
+from models.points.voting.voting_model import train_voting_model
+from models.evaluate_model import calculate_rolling_ndcg
 from utils.processing.pts_columns_to_keep import get_selected_features
 
 

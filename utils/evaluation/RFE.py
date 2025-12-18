@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import xgboost as xgb
 from sklearn.feature_selection import RFE
-from models.points.gradient_boost import model_params
+from models.points.gradient_boost.gradient_boost import model_params
 from utils.processing.get_train_test_data import get_train_test_data
 
 

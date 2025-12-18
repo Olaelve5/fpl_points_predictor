@@ -3,11 +3,11 @@ import numpy as np
 from sklearn.metrics import ndcg_score
 import pandas as pd
 from datetime import datetime
-from models.points.voting_model import train_voting_model
+from models.points.voting.voting_model import train_voting_model
 from models.minutes.combined_minutes import train_both_models, pipeline_for_testing
-from models.minutes.minutes_classifier import clf_params
-from models.minutes.minutes_pred import reg_params
-from models.points.gradient_boost import model_params
+from models.minutes.clf.minutes_classifier import clf_params
+from models.minutes.reg.minutes_regressor import reg_params
+from models.points.gradient_boost.gradient_boost import model_params
 import xgboost as xgb
 from utils.processing.pts_columns_to_keep import get_selected_features
 
