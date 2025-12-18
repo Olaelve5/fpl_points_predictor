@@ -73,10 +73,6 @@ def prepare_features(df, team_data_file_path=None, history_map=None, pos_avg_map
         df["self_team_defense_rating"] / df["next_fixture_attack_rating"]
     ).round(2)
 
-    # 6. Status
-    if "status" not in df.columns:
-        df["status"] = np.where(df["minutes"] > 0, "available", "unavailable")
-
     return df
 
 
