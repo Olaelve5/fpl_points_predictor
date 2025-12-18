@@ -4,6 +4,7 @@ from itertools import product
 from utils.processing.get_train_test_data import get_train_test_data
 from models.points.voting_model import train_voting_model
 from utils.evaluation.evaluate_model import calculate_rolling_ndcg
+from utils.processing.pts_columns_to_keep import get_selected_features
 
 
 def optimize_voting_weights(window_size=5):
@@ -27,9 +28,14 @@ def optimize_voting_weights(window_size=5):
             test_season=season, minutes_training=False
         )
 
+        # Keep only selected features
+        selected_features = get_selected_features()
+        x_tr = x_tr[selected_features]
+        x_te = x_te[selected_features]
+
         # Pass dummy weights because they don't affect fitting, only prediction
         print("  Training Ensemble (Once)...")
-        model = train_voting_model(x_tr, y_tr, x_te, y_te, weights=[0.33, 0.33, 0.33])
+        model = train_voting_model(x_tr, y_tr, weights=[0.33, 0.33, 0.33])
 
         # Access the fitted estimators directly
         pred_xgb = model.named_estimators_["xgb"].predict(x_te)

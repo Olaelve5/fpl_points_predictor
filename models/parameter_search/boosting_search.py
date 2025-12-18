@@ -3,6 +3,7 @@ import numpy as np
 from xgboost import XGBRegressor
 from utils.processing.get_train_test_data import get_train_test_data
 from utils.evaluation.evaluate_model import calculate_rolling_ndcg
+from utils.processing.pts_columns_to_keep import get_selected_features
 
 
 N_TRIALS = 50
@@ -20,7 +21,13 @@ def search_params_optuna(window_size=WINDOW_SIZE, n_trials=N_TRIALS):
         x_tr, x_te, y_tr, y_te, meta = get_train_test_data(
             test_season=season, minutes_training=False
         )
-        data_cache[season] = (x_tr, x_te, y_tr, y_te, meta)
+        data_cache[season] = (
+            x_tr[get_selected_features()],
+            x_te[get_selected_features()],
+            y_tr,
+            y_te,
+            meta,
+        )
     print("--- Data Loaded ---\n")
 
     # Define the Objective Function for Optuna

@@ -8,7 +8,7 @@ from utils.processing.pts_columns_to_keep import get_selected_features
 
 # Model parameters
 model_params = {
-    "n_estimators": 1500,
+    "n_estimators": 600,
     "learning_rate": 0.00507478,
     "max_depth": 4,
     "subsample": 0.7280711396060937,
@@ -19,7 +19,6 @@ model_params = {
     "objective": "reg:squarederror",
     "n_jobs": -1,
     "random_state": 42,
-    "early_stopping_rounds": 100,
 }
 
 # Initialize model with parameters

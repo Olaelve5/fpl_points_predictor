@@ -40,14 +40,16 @@ def run_backtest(model_name, window_size):
         x_train_pts, x_test_pts, y_train_pts, y_test_pts, test_metadata_pts = (
             training_data_pts
         )
-        pts_features = get_selected_features()
-        x_train_pts = x_train_pts[pts_features]
-        x_test_pts = x_test_pts[pts_features]
+        # pts_features = get_selected_features()
+        # x_train_pts = x_train_pts[pts_features]
         model = xgb.XGBRegressor(**model_params)
         model.fit(
             x_train_pts,
             y_train_pts,
-            eval_set=[(x_train_pts, y_train_pts), (x_test_pts, y_test_pts)],
+            eval_set=[
+                (x_train_pts, y_train_pts),
+                (x_test_pts, y_test_pts),
+            ],
             verbose=False,
         )
 
@@ -56,7 +58,7 @@ def run_backtest(model_name, window_size):
         df_with_pred_mins = pipeline_for_testing(reg_model, clf_model, x_test_pts)
 
         print("\nPredicting Points for Test Set...")
-        X_pts = df_with_pred_mins[pts_features]
+        X_pts = df_with_pred_mins
         predictions = model.predict(X_pts)
 
         y_actual = y_test_pts.values
