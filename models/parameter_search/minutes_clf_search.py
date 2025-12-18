@@ -1,53 +1,100 @@
 import optuna
-from lightgbm import LGBMClassifier
-from sklearn.model_selection import cross_val_score
+import lightgbm as lgb
+import numpy as np
+import pandas as pd
+from sklearn.metrics import log_loss
+from sklearn.model_selection import TimeSeriesSplit
 from utils.processing.get_train_test_data import get_train_test_data
 
-# --- Load your data once ---
-training_data = get_train_test_data(minutes_training=True, minutes_classifier=True)
-X_train, _, y_train, _ = (
-    training_data  # We only need the training set for cross-validation
-)
 
+def objective(trial, X, y):
+    """
+    Optuna objective function to minimize LogLoss.
+    """
 
-# 1. Define the objective function for Optuna
-def objective(trial):
-    """
-    This function takes a trial object and returns the score to be maximized.
-    """
-    # Define the hyperparameter search space
-    params = {
+    # Define the Hyperparameter Search Space
+    param_grid = {
         "objective": "binary",
-        "metric": "auc",
-        "n_estimators": trial.suggest_int("n_estimators", 200, 2000),
-        "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.1, log=True),
-        "num_leaves": trial.suggest_int("num_leaves", 20, 100),
-        "max_depth": trial.suggest_int("max_depth", 3, 10),
-        "min_child_samples": trial.suggest_int("min_child_samples", 5, 100),
-        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
-        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+        "metric": "binary_logloss",
+        "verbosity": -1,
+        "boosting_type": "gbdt",
         "random_state": 42,
         "n_jobs": -1,
+        # Tree Structure (The most important part)
+        "num_leaves": trial.suggest_int("num_leaves", 5, 60),
+        "max_depth": trial.suggest_int("max_depth", 4, 12),
+        "min_child_samples": trial.suggest_int("min_child_samples", 10, 100),
+        # Regularization (Prevents overfitting to specific past games)
+        "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
+        "lambda_l2": trial.suggest_float("lambda_l2", 1e-8, 10.0, log=True),
+        # Learning Speed
+        "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1),
+        "n_estimators": trial.suggest_int("n_estimators", 300, 3000),
+        # Sampling (Speed & Generalization)
+        "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "subsample_freq": trial.suggest_int("subsample_freq", 1, 7),
     }
 
-    model = LGBMClassifier(**params)
+    # Setup Time-Series Cross-Validation
+    tscv = TimeSeriesSplit(n_splits=5)
 
-    # Use cross-validation to get a robust score
-    # This is more reliable than a single train-test split
-    score = cross_val_score(model, X_train, y_train, n_jobs=-1, cv=3, scoring="roc_auc")
-    auc = score.mean()
+    logloss_scores = []
 
-    return auc
+    # We must reset index to ensure .iloc slicing works
+    X = X.reset_index(drop=True)
+    y = y.reset_index(drop=True)
+
+    # Cross-Validation Loop
+    for train_index, val_index in tscv.split(X):
+        X_tr, X_val = X.iloc[train_index], X.iloc[val_index]
+        y_tr, y_val = y.iloc[train_index], y.iloc[val_index]
+
+        # Create LightGBM Dataset format (faster)
+        dtrain = lgb.Dataset(X_tr, label=y_tr)
+        dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
+
+        clf = lgb.train(
+            param_grid,
+            dtrain,
+            valid_sets=[dval],
+            callbacks=[
+                lgb.early_stopping(stopping_rounds=100, verbose=False),
+            ],
+        )
+
+        # Predict & Score
+        preds = clf.predict(X_val)
+        score = log_loss(y_val, preds)
+        logloss_scores.append(score)
+
+    # Return the average LogLoss across all folds
+    return np.mean(logloss_scores)
 
 
-# 2. Create a study object and run the optimization
-study = optuna.create_study(direction="maximize")  # We want to maximize the AUC
-study.optimize(objective, n_trials=50)  # Run 50 trials
+if __name__ == "__main__":
+    X_train, X_test, y_train_full, y_test_full, _ = get_train_test_data(
+        minutes_training=True
+    )
+    y_train = y_train_full["classifier_target"]
 
-# 3. Print out the best results
-print("Best trial:")
-trial = study.best_trial
-print(f"  Value (AUC): {trial.value}")
-print("  Best hyperparameters: ")
-for key, value in trial.params.items():
-    print(f"    {key}: {value}")
+    print("Starting Optuna Optimization...")
+
+    study = optuna.create_study(
+        direction="minimize",
+        study_name="LGBM_Minutes_Classifier",
+        pruner=optuna.pruners.MedianPruner(),
+    )
+
+    # Run Optimization
+    study.optimize(lambda trial: objective(trial, X_train, y_train), n_trials=50)
+
+    print("\n--- 🏆 Best Trial Results ---")
+    print(f"Best LogLoss: {study.best_value:.4f}")
+    print("Best Params:")
+    for key, value in study.best_params.items():
+        print(f"    '{key}': {value},")
+
+    # Visualizing the search
+    optuna.visualization.plot_optimization_history(study).show()
+    optuna.visualization.plot_param_importances(study).show()
