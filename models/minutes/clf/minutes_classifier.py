@@ -14,23 +14,24 @@ from sklearn.metrics import (
 )
 from sklearn.calibration import calibration_curve
 from utils.processing.get_train_test_data import get_train_test_data
+from models.minutes.clf.features_to_drop import clf_features_to_drop
 
 clf_params = {
     "objective": "binary",
     "metric": "binary_logloss",
     "boosting_type": "gbdt",
-    "n_estimators": 1342,
-    "learning_rate": 0.01,
-    "min_child_samples": 68,
-    "num_leaves": 45,
+    "n_estimators": 2405,
+    "learning_rate": 0.005151069718041248,
+    "min_child_samples": 86,
+    "num_leaves": 50,
     "random_state": 42,
-    "reg_alpha": 9.149741040178033e-07,
-    "reg_lambda": 0.0005516549939026048,
+    "reg_alpha": 0.0001648049047195051,
+    "reg_lambda": 6.436450710074285e-08,
     "n_jobs": -1,
-    "subsample": 0.7134422500910328,
-    "colsample_bytree": 0.7096679855599513,
-    "max_depth": 10,
-    "subsample_freq": 1,
+    "subsample": 0.8294252366976965,
+    "colsample_bytree": 0.6476750033254092,
+    "max_depth": 8,
+    "subsample_freq": 6,
 }
 
 
@@ -206,6 +207,11 @@ if __name__ == "__main__":
 
     y_train = y_train_full["classifier_target"]
     y_test = y_test_full["classifier_target"]
+
+    # Drop features identified as useless in feature search
+    features_to_drop = clf_features_to_drop()
+    X_train.drop(columns=features_to_drop, inplace=True, errors="ignore")
+    X_test.drop(columns=features_to_drop, inplace=True, errors="ignore")
 
     # Train model
     print("Training Final Model...")

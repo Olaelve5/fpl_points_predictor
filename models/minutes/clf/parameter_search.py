@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.metrics import log_loss
 from sklearn.model_selection import TimeSeriesSplit
 from utils.processing.get_train_test_data import get_train_test_data
+from models.minutes.clf.features_to_drop import clf_features_to_drop
 
 
 def objective(trial, X, y):
@@ -25,8 +26,8 @@ def objective(trial, X, y):
         "max_depth": trial.suggest_int("max_depth", 4, 12),
         "min_child_samples": trial.suggest_int("min_child_samples", 10, 100),
         # Regularization (Prevents overfitting to specific past games)
-        "lambda_l1": trial.suggest_float("lambda_l1", 1e-8, 10.0, log=True),
-        "lambda_l2": trial.suggest_float("lambda_l2", 1e-8, 10.0, log=True),
+        "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
+        "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
         # Learning Speed
         "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1),
         "n_estimators": trial.suggest_int("n_estimators", 300, 3000),
@@ -73,10 +74,15 @@ def objective(trial, X, y):
 
 
 if __name__ == "__main__":
-    X_train, X_test, y_train_full, y_test_full, _ = get_train_test_data(
+    x_train, x_test, y_train_full, y_test_full, _ = get_train_test_data(
         minutes_training=True
     )
     y_train = y_train_full["classifier_target"]
+
+    # Drop useless features before analysis
+    features_to_drop = clf_features_to_drop()
+    x_train.drop(columns=features_to_drop, inplace=True, errors="ignore")
+    x_test.drop(columns=features_to_drop, inplace=True, errors="ignore")
 
     print("Starting Optuna Optimization...")
 
@@ -87,7 +93,7 @@ if __name__ == "__main__":
     )
 
     # Run Optimization
-    study.optimize(lambda trial: objective(trial, X_train, y_train), n_trials=50)
+    study.optimize(lambda trial: objective(trial, x_train, y_train), n_trials=50)
 
     print("\n--- 🏆 Best Trial Results ---")
     print(f"Best LogLoss: {study.best_value:.4f}")
