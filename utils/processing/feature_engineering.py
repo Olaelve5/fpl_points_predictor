@@ -117,6 +117,9 @@ def add_rolling_features(df, span_size=6, drop_targets=True):
             # If the source column doesn't exist, create the EWMA column with NaN values
             df[config["name"]] = np.nan
 
+    # Add percentage Played
+    df = add_percentage_played(df)
+
     # Add target scores.
     df["target_score"] = df.groupby("name")["total_points"].shift(-1)
     df["predicted_minutes"] = df.groupby("name")["minutes"].shift(-1)
@@ -124,6 +127,28 @@ def add_rolling_features(df, span_size=6, drop_targets=True):
     # If drop_targets, drop rows where targets are NaN
     if drop_targets:
         df.dropna(subset=["target_score", "predicted_minutes"], inplace=True)
+
+    return df
+
+
+def add_percentage_played(df):
+    """
+    Calculates the percentage of games played/started in the last 5 matches.
+    Assumes df is already sorted by date/gameweek.
+    """
+    # Filter out where the player did not play - 5 is the threshold for "played"
+    df["temp_played"] = (df["minutes"] > 5).astype(int)
+
+    # Calculate Rolling Percentage over last 5 games
+    df["played_last_5_pct"] = df.groupby("name")["temp_played"].transform(
+        lambda x: x.rolling(window=5, min_periods=1).mean()
+    )
+
+    # 3. Fill NaNs for safety
+    df["played_last_5_pct"] = df["played_last_5_pct"].fillna(0)
+
+    # Clean up temp column
+    df = df.drop(columns=["temp_played"])
 
     return df
 
@@ -137,7 +162,7 @@ def get_history(row, history_map, pos_avg_map):
 
     # If we have no history (First season in data OR new signing),
     if row["position"] in pos_avg_map:
-        return pos_avg_map[row["position"]], 70
+        return pos_avg_map[row["position"]], 60
 
     return 0, 60
 
@@ -147,7 +172,7 @@ def get_historic_stats_map(df):
     Returns a dictionary mapping (Player, Current_Season) -> Previous_Season_Stats
     """
     # Filter for valid games (where they actually played)
-    played_df = df[df["minutes"] > 45].copy()
+    played_df = df[df["minutes"] > 30].copy()
 
     # Group by Player and Season to get averages
     season_stats = (
