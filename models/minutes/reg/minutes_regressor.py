@@ -12,13 +12,16 @@ from models.minutes.reg.features_to_drop import reg_features_to_drop
 reg_params = {
     "objective": "regression_l1",
     "metric": "mae",
-    "n_estimators": 1000,
-    "learning_rate": 0.01,
-    "num_leaves": 50,
-    "random_state": 42,
-    "n_jobs": -1,
-    "reg_alpha": 0.1,  # L1 Regularization
-    "reg_lambda": 1.0,  # L2 Regularization
+    "num_leaves": 55,
+    "max_depth": 8,
+    "min_child_samples": 72,
+    "reg_alpha": 0.06841983345849621,
+    "reg_lambda": 0.03348955867587131,
+    "learning_rate": 0.005003396883012749,
+    "n_estimators": 2038,
+    "subsample": 0.90361399189815,
+    "colsample_bytree": 0.9356589972559429,
+    "subsample_freq": 2,
 }
 
 model = LGBMRegressor(**reg_params)
