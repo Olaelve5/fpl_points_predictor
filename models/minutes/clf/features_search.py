@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
 from sklearn.inspection import permutation_importance
-from models.minutes.minutes_classifier import clf_params
+from models.minutes.clf.minutes_classifier import clf_params
 from utils.processing.get_train_test_data import get_train_test_data
 
 
@@ -15,7 +15,7 @@ def analyze_feature_importance():
 
     # Get Data
     x_train, x_test, y_train_full, y_test_full, _ = get_train_test_data(
-        minutes_training=True
+        minutes_training=True,
     )
 
     y_train = y_train_full["classifier_target"]
@@ -51,6 +51,7 @@ def analyze_feature_importance():
         n_repeats=5,
         random_state=42,
         scoring="neg_log_loss",
+        n_jobs=-1,
     )
 
     feature_imp["permutation_importance"] = perm_result.importances_mean

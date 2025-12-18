@@ -6,7 +6,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
 from utils.processing.get_train_test_data import get_train_test_data
 import xgboost as xgb
-from models.points.gradient_boost import model_params
+from models.points.gradient_boost.gradient_boost import model_params
 
 
 def train_voting_model(X_train, y_train, weights=[0.1, 0.3, 0.6]):
