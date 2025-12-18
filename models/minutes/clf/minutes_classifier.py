@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
-from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import (
     confusion_matrix,
     log_loss,
