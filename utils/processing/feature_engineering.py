@@ -92,6 +92,7 @@ def add_rolling_features(df, span_size=6, drop_targets=True):
     # Define columns to calculate EWMA for with their decimal places
     ewma_columns = {
         "total_points": {"name": "ewma_points", "decimals": 1},
+        "ict_index": {"name": "ewma_ict", "decimals": 2},
         "minutes": {"name": "ewma_minutes", "decimals": 1},
         "expected_goals": {"name": "ewma_xG", "decimals": 2},
         "expected_assists": {"name": "ewma_xA", "decimals": 2},

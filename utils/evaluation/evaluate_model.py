@@ -3,13 +3,13 @@ import numpy as np
 from sklearn.metrics import ndcg_score
 import pandas as pd
 from datetime import datetime
-from xgboost import XGBRegressor
 from models.points.voting_model import train_voting_model
 from models.minutes.combined_minutes import train_both_models, pipeline_for_testing
 from models.minutes.minutes_classifier import clf_params
 from models.minutes.minutes_pred import reg_params
-import joblib
 from models.points.gradient_boost import model_params
+import xgboost as xgb
+from utils.processing.pts_columns_to_keep import get_selected_features
 
 
 def run_backtest(model_name, window_size):
@@ -40,17 +40,25 @@ def run_backtest(model_name, window_size):
         x_train_pts, x_test_pts, y_train_pts, y_test_pts, test_metadata_pts = (
             training_data_pts
         )
-        model = train_voting_model(x_train_pts, y_train_pts)
+        # pts_features = get_selected_features()
+        # x_train_pts = x_train_pts[pts_features]
+        model = xgb.XGBRegressor(**model_params)
+        model.fit(
+            x_train_pts,
+            y_train_pts,
+            eval_set=[
+                (x_train_pts, y_train_pts),
+                (x_test_pts, y_test_pts),
+            ],
+            verbose=False,
+        )
 
         # Predictions - first mins model, then points model
         print("\nPredicting Minutes for Test Set...")
         df_with_pred_mins = pipeline_for_testing(reg_model, clf_model, x_test_pts)
 
         print("\nPredicting Points for Test Set...")
-        joblib.load("data/feature_order/points_feature_order.pkl")
-        X_pts = df_with_pred_mins[
-            joblib.load("data/feature_order/points_feature_order.pkl")
-        ]
+        X_pts = df_with_pred_mins
         predictions = model.predict(X_pts)
 
         y_actual = y_test_pts.values
@@ -143,4 +151,4 @@ def save_score(model_name, model_scores, window_size):
 
 
 if __name__ == "__main__":
-    run_backtest(model_name="voting_model", window_size=5)
+    run_backtest(model_name="XGB_Boosting_model", window_size=5)
