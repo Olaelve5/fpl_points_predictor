@@ -94,7 +94,3 @@ if __name__ == "__main__":
     print("Best Params:")
     for key, value in study.best_params.items():
         print(f"    '{key}': {value},")
-
-    # Visualizing the search
-    optuna.visualization.plot_optimization_history(study).show()
-    optuna.visualization.plot_param_importances(study).show()
