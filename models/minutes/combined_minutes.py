@@ -151,23 +151,28 @@ def pipeline_for_testing(reg_model, clf_model, rows_to_predict):
     classifier = clf_model
     regressor = reg_model
 
-    # Drop useless features before prediction
-    features_to_drop_clf = clf_features_to_drop()
-    features_to_drop_reg = reg_features_to_drop()
-    clf_X = rows_to_predict.drop(columns=features_to_drop_clf, errors="ignore")
-    reg_X = rows_to_predict.drop(columns=features_to_drop_reg, errors="ignore")
+    # Get the exact feature names from the trained models
+    clf_expected_features = classifier.feature_name_
+    reg_expected_features = regressor.feature_name_
+
+    # Select only these features from the input dataframe
+    clf_X = rows_to_predict[clf_expected_features]
+    reg_X = rows_to_predict[reg_expected_features]
 
     # Make predictions
     print("\nRunning Two-Stage Minutes Model for Testing...")
     prob_playing = classifier.predict_proba(clf_X)[:, 1]
     raw_minutes = regressor.predict(reg_X)
+
     predicted_minutes = np.round(prob_playing * raw_minutes).astype(int).clip(0, 90)
 
-    rows_to_predict["predicted_minutes"] = predicted_minutes
+    # Modify the original dataframe to include the prediction
+    results = rows_to_predict.copy()
+    results["predicted_minutes"] = predicted_minutes
 
     print("Minutes successfully predicted for testing ✅ \n")
 
-    return rows_to_predict
+    return results
 
 
 def train_both_models(training_data, params_clf, params_reg):
