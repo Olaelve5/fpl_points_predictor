@@ -7,7 +7,7 @@ from models.points.voting.voting_model import train_voting_model
 from models.minutes.combined_minutes import train_both_models, pipeline_for_testing
 from models.minutes.clf.minutes_classifier import clf_params
 from models.minutes.reg.minutes_regressor import reg_params
-from models.points.gradient_boost.gradient_boost import model_params
+from models.points.gradient_boost.model import model_params
 import xgboost as xgb
 from utils.processing.pts_columns_to_keep import get_selected_features
 
