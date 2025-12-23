@@ -3,6 +3,7 @@ from utils.processing.load_csv_to_df import load_csv_to_df
 from utils.processing.process_features import process_features
 from utils.processing.feature_engineering import (
     add_fixture_difficulty_rating,
+    add_self_team_strength,
     do_feature_engineering,
 )
 from data_processing.combine_csv import combine_csv
@@ -46,6 +47,11 @@ def get_rows_to_predict(last_completed_round, is_minutes_model=False):
     rows_to_predict["next_is_home"] = rows_to_predict["was_home"]
 
     rows_to_predict = add_fixture_difficulty_rating(
+        rows_to_predict,
+        "data/team_data/updated_teams_25_26.csv",
+    )
+
+    rows_to_predict = add_self_team_strength(
         rows_to_predict,
         "data/team_data/updated_teams_25_26.csv",
     )

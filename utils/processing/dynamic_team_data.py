@@ -18,8 +18,8 @@ def pull_club_elos():
     raw_max = prem_elo["Elo"].max()
     raw_min = prem_elo["Elo"].min()
 
-    new_max = 1310
-    new_min = 1120
+    new_max = 1320
+    new_min = 1110
 
     # Squashes raw elo's to range used in predictions (with some room for extra ratings)
     # and adds it as a new column to the dataframe
@@ -27,7 +27,7 @@ def pull_club_elos():
         ((prem_elo["Elo"] - raw_min) * (new_max - new_min)) / (raw_max - raw_min)
     ).round(0)
 
-    home_advantage = 30
+    home_advantage = 20
 
     prem_elo["strength_overall_home"] = prem_elo["normalized_elo"] + home_advantage
     prem_elo["strength_overall_away"] = prem_elo["normalized_elo"] - home_advantage
@@ -175,4 +175,5 @@ def save_ratings_to_csv(filepath="data/team_data/updated_teams_25_26.csv"):
     print(f"✅ Updated team ratings saved to {filepath}")
 
 
-print(save_ratings_to_csv())
+if __name__ == "__main__":
+    save_ratings_to_csv()

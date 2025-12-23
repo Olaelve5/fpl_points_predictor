@@ -6,8 +6,8 @@ from fpl_api.fetch_updated_player_data import fetch_all_players_data
 from models.minutes.combined_minutes import minutes_prediction_pipeline
 import joblib
 from utils.processing.team_id_name_map import team_id_name_map
-from models.experts.experts_model import ExpertsModel
 from models.points.gradient_boost.get_columns_to_drop import get_columns_to_drop
+from utils.processing.dynamic_team_data import save_ratings_to_csv
 
 
 def prediction_pipeline(points_model):
@@ -22,8 +22,10 @@ def prediction_pipeline(points_model):
     last_completed_round_local = get_last_completed_round_local()
 
     # Fetch new player data if the local data is outdated
+    # Also update team ratings CSV
     if last_completed_round_api > last_completed_round_local:
         fetch_all_players_data()
+        save_ratings_to_csv()
 
     _, df_with_mins = minutes_prediction_pipeline()
 
