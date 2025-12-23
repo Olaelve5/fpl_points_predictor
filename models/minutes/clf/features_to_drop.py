@@ -4,6 +4,7 @@ def clf_features_to_drop():
     """
     features_to_drop = [
         "goals_scored",
+        "creativity",
         "assists",
         "bonus",
         "saves",
@@ -13,6 +14,7 @@ def clf_features_to_drop():
         "goals_conceded",
         "expected_goals",
         "expected_assists",
+        "expected_goal_involvements",
         "ewma_xG",
         "ewma_xA",
         "ewma_threat",
@@ -21,6 +23,7 @@ def clf_features_to_drop():
         "ewma_cs",
         "next_fixture_defense_rating",
         "next_fixture_attack_rating",
+        "next_fixture_def_atk_ratio",
     ]
 
     return features_to_drop
