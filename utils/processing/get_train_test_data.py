@@ -43,7 +43,11 @@ def get_train_test_data(minutes_training=False, test_season="25_26"):
     X_test = features.loc[test_mask]
     y_test = target.loc[test_mask]
 
-    # Get metadata specifically for the test set (for evaluation later)
+    # Metadata for training set
+    train_meta = metadata.loc[train_mask].copy()
+    train_meta.drop("season_int", axis=1, inplace=True)
+
+    # Metadata for test set
     test_meta = metadata.loc[test_mask].copy()
     test_meta.drop("season_int", axis=1, inplace=True)
 
@@ -60,4 +64,4 @@ def get_train_test_data(minutes_training=False, test_season="25_26"):
     X_test.to_csv("data/training_data/X_test.csv", index=False)
     y_test.to_csv("data/training_data/y_test.csv", index=False)
 
-    return X_train, X_test, y_train, y_test, test_meta
+    return X_train, X_test, y_train, y_test, train_meta, test_meta
