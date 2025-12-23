@@ -17,6 +17,7 @@ model_params = {
     "reg_lambda": 4.524613837227617,
     "gamma": 0.08361061114366114,
     "objective": "reg:squarederror",
+    "eval_metric": "poisson-nloglik",
     "n_jobs": -1,
     "random_state": 42,
 }
