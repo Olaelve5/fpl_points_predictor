@@ -4,6 +4,8 @@ import joblib
 from utils.processing.get_last_completed_round import get_last_completed_round
 from utils.processing.get_prediction_data import get_rows_to_predict
 import lightgbm as lgb
+from models.minutes.reg.features_to_drop import reg_features_to_drop
+from models.minutes.clf.features_to_drop import clf_features_to_drop
 
 
 # --- 1. Model Loading ---
@@ -16,8 +18,7 @@ def load_models():
         regressor = joblib.load(
             "data/saved_models/minutes/minutes_regression_model.pkl"
         )
-        feature_order = joblib.load("data/feature_order/minutes_feature_order.pkl")
-        return classifier, regressor, feature_order
+        return classifier, regressor
     except FileNotFoundError as e:
         print(f"Error loading models: {e}")
         exit()
@@ -58,10 +59,7 @@ def minutes_prediction_pipeline():
     print(f"--- 🚀 Predicting for GW{last_round + 1} --- \n")
     _, rows_to_predict = get_rows_to_predict(last_round, is_minutes_model=True)
 
-    print(rows_to_predict.shape[0], "players to predict minutes for.")
-    print(rows_to_predict.head())
-
-    classifier, regressor, feature_order = load_models()
+    classifier, regressor = load_models()
 
     identifiers = rows_to_predict[
         [
@@ -78,26 +76,44 @@ def minutes_prediction_pipeline():
         ]
     ].copy()
 
-    # Ensure the feature order from training is enforced.
-    # Will also drop the columns that should be dropped
-    X = rows_to_predict[feature_order].copy()
+    # Drop useless features before prediction + identifiers
+    features_to_drop_clf = clf_features_to_drop() + [
+        "name",
+        "team",
+        "status",
+        "opponent_team",
+    ]
+    features_to_drop_reg = reg_features_to_drop() + [
+        "name",
+        "team",
+        "status",
+        "opponent_team",
+    ]
+
+    clf_X = rows_to_predict.drop(columns=features_to_drop_clf, errors="ignore")
+    reg_X = rows_to_predict.drop(columns=features_to_drop_reg, errors="ignore")
 
     # Make predictions
     print("\nRunning Two-Stage Minutes Model...")
-    prob_playing = classifier.predict_proba(X)[:, 1]
-    raw_minutes = regressor.predict(X)
+    prob_playing = classifier.predict_proba(clf_X)[:, 1]
+    raw_minutes = regressor.predict(reg_X)
 
     # Combine to get final minutes prediction
     results = identifiers.copy()
     results["prob_play"] = prob_playing.round(2)
     results["raw_minutes"] = np.round(raw_minutes, 1)
-    expected_minutes = (prob_playing * raw_minutes).round(0)
 
-    # Set minutes to 90 for "nailed" players, and
-    # to 0 for unavailable players
-    results["predicted_minutes"] = np.round(expected_minutes).astype(int).clip(0, 90)
-    is_nailed = (results["prob_play"] >= 0.95) & (results["raw_minutes"] >= 85)
-    results.loc[is_nailed, "predicted_minutes"] = 90
+    results["xMins"] = (results["prob_play"] * results["raw_minutes"]).round(1)
+    results["predicted_minutes"] = np.round(results["xMins"]).astype(int)
+
+    # RULE A: The "Likely Starter" Snap-to-Grid
+    # If a player has > 75% chance to play, assume they play their full duration.
+    likely_starter_mask = results["prob_play"] >= 0.75
+    results.loc[likely_starter_mask, "predicted_minutes"] = (
+        results.loc[likely_starter_mask, "raw_minutes"].round().astype(int)
+    )
+
+    # Set minutes to 0 for unavailable players
     results.loc[results["status"] == "unavailable", "predicted_minutes"] = 0
 
     # Handle goalkeeper minutes
@@ -106,10 +122,10 @@ def minutes_prediction_pipeline():
     # Add back identifiers to the full dataframe.
     # This dataframe will be used to make final predictions in
     # the main pipeline
-    cols_to_add = [col for col in identifiers.columns if col not in X.columns] + [
-        "predicted_minutes"
-    ]
-    X = pd.concat([X, results[cols_to_add]], axis=1)
+    cols_to_add = [
+        col for col in identifiers.columns if col not in rows_to_predict.columns
+    ] + ["predicted_minutes"]
+    X = pd.concat([rows_to_predict, results[cols_to_add]], axis=1)
 
     # 8. Save
     results.sort_values(
@@ -134,25 +150,40 @@ def pipeline_for_testing(reg_model, clf_model, rows_to_predict):
     """
     classifier = clf_model
     regressor = reg_model
-    feature_order = joblib.load("data/feature_order/minutes_feature_order.pkl")
 
-    X = rows_to_predict[feature_order].copy()
+    # Get the exact feature names from the trained models
+    clf_expected_features = classifier.feature_name_
+    reg_expected_features = regressor.feature_name_
+
+    # Select only these features from the input dataframe
+    clf_X = rows_to_predict[clf_expected_features]
+    reg_X = rows_to_predict[reg_expected_features]
 
     # Make predictions
     print("\nRunning Two-Stage Minutes Model for Testing...")
-    prob_playing = classifier.predict_proba(X)[:, 1]
-    raw_minutes = regressor.predict(X)
+    prob_playing = classifier.predict_proba(clf_X)[:, 1]
+    raw_minutes = regressor.predict(reg_X)
+
     predicted_minutes = np.round(prob_playing * raw_minutes).astype(int).clip(0, 90)
 
-    X["predicted_minutes"] = predicted_minutes
+    # Modify the original dataframe to include the prediction
+    results = rows_to_predict.copy()
+    results["predicted_minutes"] = predicted_minutes
 
     print("Minutes successfully predicted for testing ✅ \n")
 
-    return X
+    return results
 
 
 def train_both_models(training_data, params_clf, params_reg):
     X_train, X_test, y_train, y_test, _ = training_data
+
+    # Drop features before training
+    clf_x_train = X_train.drop(columns=clf_features_to_drop(), errors="ignore")
+    clf_x_test = X_test.drop(columns=clf_features_to_drop(), errors="ignore")
+
+    reg_x_train = X_train.drop(columns=reg_features_to_drop(), errors="ignore")
+    reg_x_test = X_test.drop(columns=reg_features_to_drop(), errors="ignore")
 
     # ==========================================
     # MODEL 1: THE CLASSIFIER (Probability of Playing)
@@ -167,9 +198,9 @@ def train_both_models(training_data, params_clf, params_reg):
     clf_model = lgb.LGBMClassifier(**params_clf)
 
     clf_model.fit(
-        X_train,
+        clf_x_train,
         y_train_clf,
-        eval_set=[(X_train, y_train_clf), (X_test, y_test_clf)],
+        eval_set=[(clf_x_train, y_train_clf), (clf_x_test, y_test_clf)],
         eval_metric="logloss",  # AUC or logloss is best for binary classification
         callbacks=[
             lgb.early_stopping(100, verbose=True),
@@ -188,10 +219,10 @@ def train_both_models(training_data, params_clf, params_reg):
     mask_test = y_test["regressor_target"] > 5
 
     # 2. Apply Masks
-    X_train_reg = X_train.loc[mask_train]
+    X_train_reg = reg_x_train.loc[mask_train]
     y_train_reg = y_train.loc[mask_train, "regressor_target"]
 
-    X_test_reg = X_test.loc[mask_test]
+    X_test_reg = reg_x_test.loc[mask_test]
     y_test_reg = y_test.loc[mask_test, "regressor_target"]
 
     # 3. Train (Uses FILTERED dataset)
@@ -209,3 +240,7 @@ def train_both_models(training_data, params_clf, params_reg):
     )
 
     return clf_model, reg_model
+
+
+if __name__ == "__main__":
+    results, X = minutes_prediction_pipeline()

@@ -1,70 +1,122 @@
 import optuna
-from lightgbm import LGBMRegressor
-from sklearn.model_selection import cross_val_score
-from utils.processing.get_train_test_data import get_train_test_data
+import lightgbm as lgb
 import numpy as np
-
-# --- Load the data for the regressor model ---
-# IMPORTANT: For a two-model (classifier + regressor) approach to work best,
-# this data should ONLY include players who actually played (minutes > 0).
-# Please ensure your get_train_test_data function is filtering for this.
-training_data = get_train_test_data(minutes_training=True)
-X_train, _, y_train_log, _ = training_data
+import pandas as pd
+from sklearn.metrics import mean_absolute_error
+from sklearn.model_selection import TimeSeriesSplit
+from utils.processing.get_train_test_data import get_train_test_data
+from models.minutes.reg.features_to_drop import reg_features_to_drop
 
 
-# 1. Define the objective function for Optuna
-def objective(trial):
+def objective(trial, X, y):
     """
-    This function defines the search space and returns the score to be optimized.
-    We maximize the negative RMSE, which is the same as minimizing RMSE.
+    Optuna objective function to minimize MAE (Mean Absolute Error).
     """
-    # Define the hyperparameter search space
-    params = {
-        "objective": "regression_l1",  # Mean Absolute Error, often robust to outliers
-        "metric": "rmse",
-        "n_estimators": trial.suggest_int("n_estimators", 400, 2500),
-        "learning_rate": trial.suggest_float("learning_rate", 1e-3, 0.1, log=True),
-        "num_leaves": trial.suggest_int("num_leaves", 20, 100),
-        "max_depth": trial.suggest_int("max_depth", 4, 12),
-        "min_child_samples": trial.suggest_int("min_child_samples", 10, 100),
-        "subsample": trial.suggest_float("subsample", 0.7, 1.0),
-        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.7, 1.0),
-        "reg_alpha": trial.suggest_float(
-            "reg_alpha", 1e-2, 10.0, log=True
-        ),  # L1 regularization
-        "reg_lambda": trial.suggest_float(
-            "reg_lambda", 1e-2, 10.0, log=True
-        ),  # L2 regularization
+
+    # Define the Hyperparameter Search Space
+    param_grid = {
+        "objective": "regression_l1",  # Optimizes Median (Robust to outliers)
+        "metric": "mae",
+        "verbosity": -1,
+        "boosting_type": "gbdt",
         "random_state": 42,
         "n_jobs": -1,
+        # Tree Structure
+        "num_leaves": trial.suggest_int(
+            "num_leaves", 20, 80
+        ),  # Slightly higher for regression
+        "max_depth": trial.suggest_int("max_depth", 5, 15),
+        "min_child_samples": trial.suggest_int("min_child_samples", 10, 100),
+        # Regularization
+        "reg_alpha": trial.suggest_float("reg_alpha", 1e-8, 10.0, log=True),
+        "reg_lambda": trial.suggest_float("reg_lambda", 1e-8, 10.0, log=True),
+        # Learning Speed
+        "learning_rate": trial.suggest_float("learning_rate", 0.005, 0.1),
+        "n_estimators": trial.suggest_int("n_estimators", 500, 3000),
+        # Sampling
+        "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "subsample_freq": trial.suggest_int("subsample_freq", 1, 7),
     }
 
-    model = LGBMRegressor(**params)
+    # Setup Time-Series Cross-Validation
+    # We use 5 splits to ensure stability across different seasons/periods
+    tscv = TimeSeriesSplit(n_splits=5)
 
-    # Use cross-validation for a robust error score.
-    # We use 'neg_root_mean_squared_error' because Optuna's goal is to maximize.
-    score = cross_val_score(
-        model,
-        X_train,
-        y_train_log,
-        n_jobs=-1,
-        cv=3,
-        scoring="neg_root_mean_squared_error",
+    mae_scores = []
+
+    # Reset index to ensure .iloc slicing works
+    X = X.reset_index(drop=True)
+    y = y.reset_index(drop=True)
+
+    # Cross-Validation Loop
+    for train_index, val_index in tscv.split(X):
+        X_tr, X_val = X.iloc[train_index], X.iloc[val_index]
+        y_tr, y_val = y.iloc[train_index], y.iloc[val_index]
+
+        # Create LightGBM Dataset format
+        dtrain = lgb.Dataset(X_tr, label=y_tr)
+        dval = lgb.Dataset(X_val, label=y_val, reference=dtrain)
+
+        model = lgb.train(
+            param_grid,
+            dtrain,
+            valid_sets=[dval],
+            callbacks=[
+                lgb.early_stopping(stopping_rounds=100, verbose=False),
+            ],
+        )
+
+        # Predict & Score
+        preds = model.predict(X_val)
+
+        # Clip predictions to realistic bounds before scoring
+        preds = np.clip(preds, 0, 100)
+
+        score = mean_absolute_error(y_val, preds)
+        mae_scores.append(score)
+
+    # Return the average MAE across all folds
+    return np.mean(mae_scores)
+
+
+if __name__ == "__main__":
+    # 1. Get Data
+    x_train_full, _, y_train_full, _, _ = get_train_test_data(minutes_training=True)
+
+    # 2. FILTER: Only optimize on players who actually played (> 10 mins)
+    # The regressor's job is to predict duration, not appearance.
+    # We define >10 to filter out garbage time and pure bench warmers (0 mins).
+    mask = y_train_full["regressor_target"] > 10
+
+    x_train_opt = x_train_full.loc[mask].copy()
+    y_train_opt = y_train_full.loc[mask, "regressor_target"].copy()
+
+    # 3. Drop useless features
+    features_to_drop = reg_features_to_drop()
+    # Check intersection to avoid KeyErrors
+    existing_drops = [c for c in features_to_drop if c in x_train_opt.columns]
+
+    x_train_opt.drop(columns=existing_drops, inplace=True, errors="ignore")
+
+    print(f"Optimizing on {len(x_train_opt)} samples (Filtered > 10 mins)")
+    print(f"Dropped {len(existing_drops)} noise features.")
+
+    print("Starting Optuna Optimization...")
+
+    study = optuna.create_study(
+        direction="minimize",
+        study_name="LGBM_Minutes_Regressor",
+        pruner=optuna.pruners.MedianPruner(),
     )
-    rmse = score.mean()
 
-    return rmse
+    # Run Optimization
+    study.optimize(
+        lambda trial: objective(trial, x_train_opt, y_train_opt), n_trials=50
+    )
 
-
-# 2. Create a study object and run the optimization
-study = optuna.create_study(direction="maximize")
-study.optimize(objective, n_trials=50)  # You can adjust the number of trials
-
-# 3. Print the best results
-print("\nBest trial:")
-trial = study.best_trial
-# The value is the negative RMSE, so we multiply by -1 to get the actual RMSE
-print(f"  Value (RMSE): {-trial.value:.4f}")
-print("  Best hyperparameters: ")
-for key, value in trial.params.items():
-    print(f"    {key}: {value}")
+    print("\n--- 🏆 Best Trial Results ---")
+    print(f"Best MAE: {study.best_value:.4f}")
+    print("Best Params:")
+    for key, value in study.best_params.items():
+        print(f"    '{key}': {value},")

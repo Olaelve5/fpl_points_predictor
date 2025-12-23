@@ -85,33 +85,64 @@ def add_rolling_features(df, span_size=6, drop_targets=True):
     # Needed to ensure the order is correct
     df = df.sort_values(by=["name", "season", "kickoff_time"])
 
-    # Define columns to calculate EWMA for with their decimal places
-    ewma_columns = {
-        "total_points": {"name": "ewma_points", "decimals": 1},
+    # This drops if a player is injured or banned for a gameweek
+    df["ewma_minutes"] = (
+        df.groupby("name")["minutes"]
+        .transform(lambda x: x.ewm(span=span_size, adjust=False).mean())
+        .round(0)
+    )
+
+    # This version treats 0 minutes as a missed game, so it carries forward the last known value
+    df["ewma_minutes_per_appearance"] = (
+        df.groupby("name")["minutes"]
+        .transform(
+            lambda x: x.replace(0, np.nan)  # Mask 0 mins as NaN
+            .ewm(span=span_size, ignore_na=True, adjust=False)
+            .mean()
+            .ffill()  # Carry forward previous role
+        )
+        .fillna(0)
+        .round(0)
+    )
+
+    skills_columns = {
+        "total_points": {"name": "ewma_points", "decimals": 2},
         "ict_index": {"name": "ewma_ict", "decimals": 2},
-        "minutes": {"name": "ewma_minutes", "decimals": 1},
         "expected_goals": {"name": "ewma_xG", "decimals": 2},
         "expected_assists": {"name": "ewma_xA", "decimals": 2},
-        "threat": {"name": "ewma_threat", "decimals": 1},
-        "creativity": {"name": "ewma_creativity", "decimals": 1},
+        "threat": {"name": "ewma_threat", "decimals": 2},
+        "creativity": {"name": "ewma_creativity", "decimals": 2},
         "clean_sheets": {"name": "ewma_cs", "decimals": 2},
-        "yellow_cards": {"name": "ewma_yellow_cards", "decimals": 2},
         "goals_conceded": {"name": "ewma_gc", "decimals": 2},
     }
 
-    # Calculate EWMA for each column
-    for source_col, config in ewma_columns.items():
+    is_active_mask = df["minutes"] > 0
+
+    # Calculate EWMA for each column - only when the player played
+    for source_col, config in skills_columns.items():
         if source_col in df.columns:
             df[config["name"]] = round(
-                df.groupby("name")[source_col]
-                .ewm(span=span_size, adjust=False)
-                .mean()
-                .reset_index(level=0, drop=True),
+                df.groupby("name")[source_col].transform(
+                    lambda x: x.where(is_active_mask)
+                    .ewm(span=span_size, ignore_na=True, adjust=False)
+                    .mean()
+                    .ffill()
+                ),
                 config["decimals"],
-            )
+            ).fillna(0)
         else:
-            # If the source column doesn't exist, create the EWMA column with NaN values
             df[config["name"]] = np.nan
+
+    # Last Active Minutes and Games Since Last Appearance
+    df["last_active_minutes"] = (
+        df.groupby("name")["minutes"]
+        .transform(lambda x: x.where(x > 0).ffill())
+        .fillna(0)
+    )
+
+    df["games_since_last_appearance"] = df.groupby("name")["minutes"].transform(
+        lambda x: x.eq(0).astype(int).groupby((x > 0).cumsum()).cumsum()
+    )
 
     # Add percentage Played
     df = add_percentage_played(df)
