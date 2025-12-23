@@ -9,7 +9,7 @@ from models.minutes.clf.minutes_classifier import clf_params
 from models.minutes.reg.minutes_regressor import reg_params
 from models.points.gradient_boost.model import model_params
 import xgboost as xgb
-from models.points.gradient_boost.pts_columns_to_keep import get_selected_features
+from models.points.gradient_boost.get_columns_to_drop import get_columns_to_drop
 
 
 def run_backtest(model_name, window_size):
@@ -40,8 +40,15 @@ def run_backtest(model_name, window_size):
         x_train_pts, x_test_pts, y_train_pts, y_test_pts, test_metadata_pts = (
             training_data_pts
         )
-        # pts_features = get_selected_features()
-        # x_train_pts = x_train_pts[pts_features]
+
+        # Predictions - first mins model, then points model
+        print("\nPredicting Minutes for Test Set...")
+        df_with_pred_mins = pipeline_for_testing(reg_model, clf_model, x_test_pts)
+
+        pts_cols_to_drop = get_columns_to_drop()
+        x_train_pts = x_train_pts.drop(columns=pts_cols_to_drop)
+        x_test_pts = x_test_pts.drop(columns=pts_cols_to_drop)
+
         model = xgb.XGBRegressor(**model_params)
         model.fit(
             x_train_pts,
@@ -53,12 +60,8 @@ def run_backtest(model_name, window_size):
             verbose=False,
         )
 
-        # Predictions - first mins model, then points model
-        print("\nPredicting Minutes for Test Set...")
-        df_with_pred_mins = pipeline_for_testing(reg_model, clf_model, x_test_pts)
-
         print("\nPredicting Points for Test Set...")
-        X_pts = df_with_pred_mins
+        X_pts = df_with_pred_mins.drop(columns=pts_cols_to_drop)
         predictions = model.predict(X_pts)
 
         y_actual = y_test_pts.values

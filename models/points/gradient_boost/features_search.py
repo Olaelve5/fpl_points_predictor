@@ -41,8 +41,13 @@ def calculate_rolling_ndcg(metadata, y_actual, y_pred, window_size=5):
 
 
 def run_ndcg_permutation_importance(window_size=5):
+    np.random.seed(42)
+
     seasons = ["23_24", "24_25", "25_26"]
     feature_impacts = {}
+
+    # Store the worst 10 features for each season to find the intersection later
+    worst_features_per_season = []
 
     print(f"--- Starting NDCG Permutation Importance ({len(seasons)} Seasons) ---")
 
@@ -53,11 +58,6 @@ def run_ndcg_permutation_importance(window_size=5):
         x_train, x_test, y_train, y_test, test_metadata = get_train_test_data(
             test_season=season, minutes_training=False
         )
-
-        # Ensure we are only using numeric features for training
-        # (Assuming get_train_test_data returns some non-numeric cols, filter if needed)
-        # x_train = x_train.select_dtypes(include=np.number)
-        # x_test = x_test[x_train.columns]
 
         # 2. Train Model ONCE per season
         model = xgb.XGBRegressor(**model_params)
@@ -71,8 +71,10 @@ def run_ndcg_permutation_importance(window_size=5):
         print(f"  > Baseline NDCG: {baseline_ndcg:.4f}")
 
         # 4. Permutation Loop
-        # We shuffle one column at a time and see how much NDCG drops
         print(f"  > Testing {len(x_test.columns)} features...")
+
+        # New: List to store stats just for this season
+        current_season_stats = []
 
         for feature in x_test.columns:
             # Save original column
@@ -88,18 +90,36 @@ def run_ndcg_permutation_importance(window_size=5):
             )
 
             # Calculate Impact (Higher is better)
-            # Impact = How much score DID WE LOSE?
             impact = baseline_ndcg - permuted_ndcg
 
+            # Add to global aggregator
             if feature not in feature_impacts:
                 feature_impacts[feature] = []
             feature_impacts[feature].append(impact)
 
+            # Add to current season stats
+            current_season_stats.append({"feature": feature, "impact": impact})
+
             # RESTORE original column for next iteration
             x_test[feature] = original_col
 
+        # --- Sort Season Stats ---
+        season_df = pd.DataFrame(current_season_stats)
+        season_df.sort_values(by="impact", ascending=False, inplace=True)
+
+        print(f"\n>>> TOP 20 FEATURES FOR SEASON {season}:")
+        print(season_df.head(20).to_string(index=False))
+
+        # --- NEW: Print Worst Features ---
+        print(f"\n>>> WORST 30 FEATURES FOR SEASON {season} (Negative/Low Impact):")
+        print(season_df.tail(30).to_string(index=False))
+
+        # Capture the bottom 25 for the "Consistency Check" later
+        worst_30_list = season_df.tail(25)["feature"].tolist()
+        worst_features_per_season.append(set(worst_30_list))
+
     # --- Aggregation ---
-    print("\n--- Aggregating Results ---")
+    print("\n\n--- Aggregating Results Across All Seasons ---")
     final_stats = []
 
     for feature, impacts in feature_impacts.items():
@@ -122,11 +142,29 @@ def run_ndcg_permutation_importance(window_size=5):
     df.to_csv(output_path, index=False)
 
     print(f"\nSaved rankings to {output_path}")
-    print("\nTOP 20 MOST VITAL FEATURES (Highest NDCG Loss when removed):")
+    print("\nOVERALL TOP 20 MOST VITAL FEATURES:")
     print(df.head(20)[["feature", "avg_ndcg_drop", "std_ndcg_drop"]])
 
-    print("\nTOP 30 CANDIDATES FOR REMOVAL (Negative or Zero Impact):")
-    print(df.tail(30)[["feature", "avg_ndcg_drop", "std_ndcg_drop"]])
+    print("\nOVERALL TOP 30 CANDIDATES FOR REMOVAL:")
+    print(df.tail(25)[["feature", "avg_ndcg_drop", "std_ndcg_drop"]])
+
+    # --- NEW: Print Intersection of Worst Features ---
+    print("\n\n🚨 FEATURES IN BOTTOM 25 FOR ALL SEASONS (CONSISTENTLY BAD) 🚨")
+    print(
+        "These features were among the worst 25 performers in every single season test."
+    )
+
+    if worst_features_per_season:
+        # Find intersection of all sets
+        consistent_worst = set.intersection(*worst_features_per_season)
+
+        if consistent_worst:
+            for f in consistent_worst:
+                print(f"❌ {f}")
+        else:
+            print("No single feature was in the bottom 20 for EVERY season.")
+    else:
+        print("Could not calculate intersection.")
 
 
 if __name__ == "__main__":

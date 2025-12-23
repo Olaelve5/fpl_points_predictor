@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from xgboost import XGBRegressor, plot_importance
-from models.points.gradient_boost.pts_columns_to_keep import get_selected_features
+from models.points.gradient_boost.get_columns_to_drop import get_columns_to_drop
 
 
 # Model parameters
@@ -17,7 +17,6 @@ model_params = {
     "reg_lambda": 4.524613837227617,
     "gamma": 0.08361061114366114,
     "objective": "reg:squarederror",
-    "eval_metric": "poisson-nloglik",
     "n_jobs": -1,
     "random_state": 42,
 }
@@ -110,10 +109,10 @@ if __name__ == "__main__":
     training_data = get_train_test_data()
     X_train, X_test, y_train, y_test, _ = training_data
 
-    features_to_use = get_selected_features()
+    features_to_drop = get_columns_to_drop()
 
-    X_train = X_train[features_to_use]
-    X_test = X_test[features_to_use]
+    X_train = X_train.drop(columns=features_to_drop)
+    X_test = X_test.drop(columns=features_to_drop)
 
     trained_model = model.fit(
         X_train,
