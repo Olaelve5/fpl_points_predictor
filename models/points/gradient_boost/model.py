@@ -8,17 +8,18 @@ from models.points.gradient_boost.get_columns_to_drop import get_columns_to_drop
 
 # Model parameters
 model_params = {
-    "n_estimators": 600,
-    "learning_rate": 0.00507478,
+    "n_estimators": 400,
+    "learning_rate": 0.0063725402023526445,
     "max_depth": 4,
-    "subsample": 0.7280711396060937,
-    "colsample_bytree": 0.6376547363658269,
-    "min_child_weight": 5,
-    "reg_lambda": 4.524613837227617,
-    "gamma": 0.08361061114366114,
+    "subsample": 0.7734758995465661,
+    "colsample_bytree": 0.7262035847292162,
+    "min_child_weight": 13,
+    "reg_lambda": 3.575784148752914,
+    "gamma": 0.20462858106119952,
     "objective": "reg:squarederror",
     "n_jobs": -1,
     "random_state": 42,
+    "early_stopping_rounds": 50,
 }
 
 # Initialize model with parameters
