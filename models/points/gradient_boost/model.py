@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 from xgboost import XGBRegressor, plot_importance
-from utils.processing.pts_columns_to_keep import get_selected_features
+from models.points.gradient_boost.pts_columns_to_keep import get_selected_features
 
 
 # Model parameters

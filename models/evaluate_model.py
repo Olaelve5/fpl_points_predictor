@@ -9,7 +9,7 @@ from models.minutes.clf.minutes_classifier import clf_params
 from models.minutes.reg.minutes_regressor import reg_params
 from models.points.gradient_boost.model import model_params
 import xgboost as xgb
-from utils.processing.pts_columns_to_keep import get_selected_features
+from models.points.gradient_boost.pts_columns_to_keep import get_selected_features
 
 
 def run_backtest(model_name, window_size):

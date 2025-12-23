@@ -7,7 +7,7 @@ from models.minutes.combined_minutes import minutes_prediction_pipeline
 import joblib
 from utils.processing.team_id_name_map import team_id_name_map
 from models.experts.experts_model import ExpertsModel
-from utils.processing.pts_columns_to_keep import get_selected_features
+from models.points.gradient_boost.pts_columns_to_keep import get_selected_features
 
 
 def prediction_pipeline(points_model):
