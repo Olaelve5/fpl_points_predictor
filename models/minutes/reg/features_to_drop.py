@@ -20,4 +20,9 @@ def reg_features_to_drop():
         "expected_goals",
         "transfers_out",
         "ewma_points",
+        "ewma_cs",
+        "ewma_gc",
+        "ewma_xA",
+        "self_team_defense_rating",
+        "self_team_attack_rating",
     ]
