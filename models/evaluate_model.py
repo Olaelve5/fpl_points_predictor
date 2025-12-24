@@ -49,16 +49,18 @@ def run_backtest(model_name, window_size):
         x_train_pts = x_train_pts.drop(columns=pts_cols_to_drop)
         x_test_pts = x_test_pts.drop(columns=pts_cols_to_drop)
 
-        model = xgb.XGBRegressor(**model_params)
-        model.fit(
-            x_train_pts,
-            y_train_pts,
-            eval_set=[
-                (x_train_pts, y_train_pts),
-                (x_test_pts, y_test_pts),
-            ],
-            verbose=False,
-        )
+        # model = xgb.XGBRegressor(**model_params)
+        # model.fit(
+        #     x_train_pts,
+        #     y_train_pts,
+        #     eval_set=[
+        #         (x_train_pts, y_train_pts),
+        #         (x_test_pts, y_test_pts),
+        #     ],
+        #     verbose=False,
+        # )
+
+        model = train_voting_model(x_train_pts, y_train_pts)
 
         print("\nPredicting Points for Test Set...")
         X_pts = df_with_pred_mins.drop(columns=pts_cols_to_drop)

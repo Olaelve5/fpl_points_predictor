@@ -4,7 +4,7 @@ from itertools import product
 from utils.processing.get_train_test_data import get_train_test_data
 from models.points.voting.model import train_voting_model
 from models.evaluate_model import calculate_rolling_ndcg
-from models.points.gradient_boost.get_columns_to_drop import get_selected_features
+from models.points.gradient_boost.get_columns_to_drop import get_columns_to_drop
 
 
 def optimize_voting_weights(window_size=5):
@@ -24,23 +24,22 @@ def optimize_voting_weights(window_size=5):
     for season in test_seasons:
         print(f"\nProcessing Season: {season}...")
 
-        x_tr, x_te, y_tr, y_te, meta = get_train_test_data(
+        x_train, x_test, y_train, y_test, meta = get_train_test_data(
             test_season=season, minutes_training=False
         )
 
         # Keep only selected features
-        selected_features = get_selected_features()
-        x_tr = x_tr[selected_features]
-        x_te = x_te[selected_features]
+        x_train = x_train.drop(columns=get_columns_to_drop(), errors="ignore")
+        x_test = x_test.drop(columns=get_columns_to_drop(), errors="ignore")
 
         # Pass dummy weights because they don't affect fitting, only prediction
         print("  Training Ensemble (Once)...")
-        model = train_voting_model(x_tr, y_tr, weights=[0.33, 0.33, 0.33])
+        model = train_voting_model(x_train, y_train, weights=[0.33, 0.33, 0.33])
 
         # Access the fitted estimators directly
-        pred_xgb = model.named_estimators_["xgb"].predict(x_te)
-        pred_rf = model.named_estimators_["rf"].predict(x_te)
-        pred_linear = model.named_estimators_["linear"].predict(x_te)
+        pred_xgb = model.named_estimators_["xgb"].predict(x_test)
+        pred_rf = model.named_estimators_["rf"].predict(x_test)
+        pred_linear = model.named_estimators_["linear"].predict(x_test)
 
         # Stack into a matrix: Shape (n_samples, 3)
         base_preds = np.column_stack([pred_xgb, pred_rf, pred_linear])
@@ -48,14 +47,14 @@ def optimize_voting_weights(window_size=5):
         # D. Inner Loop: Weights (The Fast Part - Pure Math)
         print(f"  Calculating scores for {len(combinations)} combinations...")
 
-        y_true = y_te.values
+        y_trainue = y_test.values
 
         for weights in combinations:
             # Vectorized Weighted Average: (Matrix) dot (Vector)
             final_pred = base_preds @ np.array(weights)
 
             # Evaluate
-            score = calculate_rolling_ndcg(meta, y_true, final_pred, window_size)
+            score = calculate_rolling_ndcg(meta, y_trainue, final_pred, window_size)
             combo_scores[weights].append(score)
 
     # Aggregate & Save Results

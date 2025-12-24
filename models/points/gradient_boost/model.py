@@ -115,11 +115,14 @@ if __name__ == "__main__":
     X_train = X_train.drop(columns=features_to_drop)
     X_test = X_test.drop(columns=features_to_drop)
 
+    # sample_weights = 1 + (y_train.clip(lower=0) * 0.05)
+
     trained_model = model.fit(
         X_train,
         y_train,
         eval_set=[(X_train, y_train), (X_test, y_test)],
         verbose=False,
+        # sample_weight=sample_weights,
     )
     print("Model trained.")
 
@@ -130,7 +133,7 @@ if __name__ == "__main__":
     print("Training complete.")
 
     # 3. Visualizations
-    plot_learning_curve(trained_model)
+    # plot_learning_curve(trained_model)
     plot_importance(trained_model)
     plot_actual_vs_predicted(y_test, model_preds)
     plot_distribution_overlay(y_test, model_preds)
